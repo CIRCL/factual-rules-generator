@@ -5,7 +5,7 @@ import allVariables
 
 
 ####Creation of yara rule
-def create_rule(ext, s, file_version, flag):
+def create_rule(ext, s, product_version, flag):
     date = datetime.datetime.now()
 
     ##Headers of yara rule
@@ -14,7 +14,7 @@ def create_rule(ext, s, file_version, flag):
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
-    rules += 'versionApp = "%s"\n\t' % (file_version)
+    rules += 'versionApp = "%s"\n\t' % (product_version)
 
     rules += "strings: \n"
 
@@ -37,17 +37,13 @@ def create_rule(ext, s, file_version, flag):
 
     ##End of yara rule
     ## 1.25 is a coefficient to match the rule, which leaves a margin of error
-    rules += "\tcondition:\n\t\t %s of ($s*)\n}" % (str(int(r/1.25)))
+    rules += "\tcondition:\n\t\t%s of ($s*)\n}" % (str(int(r/1.25)))
 
     return rules
 
 ###Save of the rule on the disk
-def save_rule(path, ext, rules):
-    p = ""
-    for i in path:
-        p += i + "\\"
-
-    yara_rule = open("%s\\%s_%s.yar" % (allVariables.pathToYaraSave, ext[1], ext[2]), "w")
+def save_rule(ext1, ext2, rules):
+    yara_rule = open("%s\\%s_%s.yar" % (allVariables.pathToYaraSave, ext1, ext2), "w")
 
     yara_rule.write(rules)
     yara_rule.close()
@@ -103,7 +99,7 @@ def file_create_rule(chemin, file_version, flag = False):
     #exit(0)
 
     ###Save of the rule on the disk
-    save_rule(chemin.split("\\")[:-1], ext, rules)
+    save_rule(ext[1], ext[2], rules)
 
 
 

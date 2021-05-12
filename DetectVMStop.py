@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import get_pe
+import datetime
 import subprocess
 import allVariables
 import automatisation_yara
@@ -15,6 +16,27 @@ def readFile():
     l = f.readline().rstrip()
     f.close()
     return l
+
+def create_rule(ext, hexa, product_version):
+    date = datetime.datetime.now()
+
+    ##Headers of yara rule
+    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[0], ext[1])
+
+    rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[0]))
+    rules += 'author = "David Cruciani"\n\t\t'
+    rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
+    rules += 'versionApp = "%s"\n\t' % (product_version)
+
+    rules += "strings: \n"
+
+    ##Creation of hexa rule
+    rules += "\t\t$h = {%s}\n" % (str(hexa))
+ 
+    ##End of yara rule
+    rules += "\tcondition:\n\t\t$h\n}"
+
+    return rules
 
 
 fapp = open(allVariables.applist, "r")
@@ -49,7 +71,7 @@ for i in range(0,line_count*2):
         print("\rTime spent: %s min" % (cptime), end="")
         res = runningVms()
 
-    print("\nWindows stop")
+    print("\nWindows stop\n")
 
 
     ## Convert windows machine into raw format
@@ -101,6 +123,10 @@ for content in os.listdir(allVariables.pathToShareWindows):
     chemin = os.path.join(allVariables.pathToShareWindows, content)
     if os.path.isfile(chemin):
         (hexa, ProductVersion) = get_pe.pe_yara(chemin)
+        c = content.split(".")
+        rule = create_rule(c, hexa, ProductVersion)
+        #print(rule)
+        automatisation_yara.save_rule(c[0], c[1], rule)
 
 for content in os.listdir(allVariables.pathToStrings):
     chemin = os.path.join(allVariables.pathToStrings, content)
