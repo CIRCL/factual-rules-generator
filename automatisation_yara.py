@@ -5,11 +5,16 @@ import allVariables
 
 
 ####Creation of yara rule
-def create_rule(ext, s, product_version, flag):
+def create_rule(ext, s, product_version, flag, l_app):
+    app = ""
+    for l in l_app:
+        if l.split(":")[1].rstrip("\n") == ext[1]:
+            app = l.split(":")[0].split(".")[0]
+
     date = datetime.datetime.now()
 
     ##Headers of yara rule
-    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[1], ext[2])
+    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[2])
 
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
@@ -49,7 +54,7 @@ def save_rule(ext1, ext2, rules):
     yara_rule.close()
 
 
-def file_create_rule(chemin, file_version, flag = False):
+def file_create_rule(chemin, file_version, l_app, flag = False):
     s = list()
 
     f = open(chemin, "r")
@@ -93,7 +98,7 @@ def file_create_rule(chemin, file_version, flag = False):
     del(ext[-2:-1])
 
     ####Creation of yara rule
-    rules = create_rule(ext, s, file_version, flag)
+    rules = create_rule(ext, s, file_version, flag, l_app)
 
     print(rules)
     #exit(0)
@@ -104,7 +109,7 @@ def file_create_rule(chemin, file_version, flag = False):
 
 
 
-def inditif(fichier, file_version):
+def inditif(fichier, file_version, l_app):
     try:
         extension = fichier.split(".")[1]
     except:
@@ -113,6 +118,6 @@ def inditif(fichier, file_version):
 
     ## the file is a tree
     if fichier.split(".")[1] == "tree":
-        file_create_rule(fichier, file_version, True)
+        file_create_rule(fichier, file_version, l_app, True)
     else:
-        file_create_rule(fichier, file_version)
+        file_create_rule(fichier, file_version, l_app)

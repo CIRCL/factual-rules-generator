@@ -17,11 +17,15 @@ def readFile():
     f.close()
     return l
 
-def create_rule(ext, hexa, product_version):
+def create_rule(ext, hexa, product_version, l_app):
+    app = ""
+    for l in l_app:
+        if l.split(":")[1].rstrip("\n") == ext[0]:
+            app = l.split(":")[0].split(".")[0]
     date = datetime.datetime.now()
 
     ##Headers of yara rule
-    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[0], ext[1])
+    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[1])
 
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[0]))
     rules += 'author = "David Cruciani"\n\t\t'
@@ -49,7 +53,7 @@ fapp.close()
 
 res = runningVms()
 
-for i in range(0,line_count*2):
+"""for i in range(0,line_count*2):
     print("Boucle n: %s, %s" % (i, l_app[i % len(l_app)].split(":")[1]))
     res = runningVms()
 
@@ -113,7 +117,7 @@ for i in range(0,line_count*2):
     ## Suppresson of the current tmp file 
     os.remove(os.path.dirname(sys.argv[0]) + "/tmp")
     ## Suppression of the current raw disk
-    os.remove(convert_file)
+    os.remove(convert_file)"""
 
 
 ## AutoGeneYara
@@ -124,11 +128,12 @@ for content in os.listdir(allVariables.pathToShareWindows):
     if os.path.isfile(chemin):
         (hexa, ProductVersion) = get_pe.pe_yara(chemin)
         c = content.split(".")
-        rule = create_rule(c, hexa, ProductVersion)
+        rule = create_rule(c, hexa, ProductVersion, l_app)
         #print(rule)
+        #exit(0)
         automatisation_yara.save_rule(c[0], c[1], rule)
 
 for content in os.listdir(allVariables.pathToStrings):
     chemin = os.path.join(allVariables.pathToStrings, content)
     if os.path.isfile(chemin):
-        automatisation_yara.inditif(chemin, ProductVersion)
+        automatisation_yara.inditif(chemin, ProductVersion, l_app)
