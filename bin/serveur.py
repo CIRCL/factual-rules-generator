@@ -2,6 +2,10 @@ import os
 import sys
 import time
 import flask
+s = ""
+for i in os.path.dirname(sys.argv[0]).split("/")[:-1]:
+    s += i + "/"
+sys.path.append(s + "etc")
 import allVariables
 
 def WriteFileP(s, current):
@@ -76,5 +80,5 @@ def uninstaller():
         return '<div>{"%s":"%s"}</div>' % (list_app[cp], lapp[list_app[cp]])
 
 
-
-app.run(host=allVariables.host, port=int(allVariables.port))
+if __name__ == '__main__':
+    app.run(host=allVariables.host, port=int(allVariables.port))

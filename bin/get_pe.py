@@ -1,5 +1,11 @@
+import os
+import sys
 import pefile
 import subprocess
+s = ""
+for i in os.path.dirname(sys.argv[0]).split("/")[:-1]:
+    s += i + "/"
+sys.path.append(s + "etc")
 import allVariables
 
 def pe_yara(file_pe):
@@ -22,17 +28,11 @@ def pe_yara(file_pe):
 
                 xxd_len = st.entries_offsets[b'FileVersion'][0] - st.entries_offsets[b'CompanyName'][0] -6
                 
-    """print(xxd_entr)
-    print(xxd_len)
-    print(FileVersion)"""
-
-    #request = allVariables.xxd + " -s " + str(xxd_entr) + " -l " + str(xxd_len) + " " + file_pe + " |" + allVariables.cut + " -c11-50 " #+ "> sortixxd"
     request = "%s -s %s -l %s %s | %s -c11-50 " % (allVariables.xxd, str(xxd_entr), str(xxd_len), file_pe, allVariables.cut)
 
     p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
     (output, err) = p.communicate()
     p_status = p.wait()
 
-    #print(output.decode())
 
     return output.decode(), ProductVersion
