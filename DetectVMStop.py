@@ -5,6 +5,7 @@ import get_pe
 import datetime
 import subprocess
 import allVariables
+import Get_Fls_Strings
 import automatisation_yara
 
 def runningVms():
@@ -43,6 +44,7 @@ def create_rule(ext, hexa, product_version, l_app):
     return rules
 
 
+
 fapp = open(allVariables.applist, "r")
 l_app = fapp.readlines()
 line_count = 0
@@ -53,7 +55,7 @@ fapp.close()
 
 res = runningVms()
 
-"""for i in range(0,line_count*2):
+for i in range(0,line_count*2):
     print("Boucle n: %s, %s" % (i, l_app[i % len(l_app)].split(":")[1]))
     res = runningVms()
 
@@ -91,33 +93,44 @@ res = runningVms()
     res = subprocess.call([qemu, "convert", "-f", "vmdk", "-O", "raw", vm, convert_file])
     print("ok\n")
 
-
-    res = runningVms()
-
-    request = [allVariables.VBoxManage, 'startvm', allVariables.LinuxVM]
-    if not allVariables.LinuxVM in res.stdout.decode():
-        ## Start ubuntu machine
-        print("Ubuntu Start")
-        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-        p_status = p.wait()
-
-
-    res = runningVms()
     
-    cptime = 0
-    while allVariables.LinuxVM in res.stdout.decode():
-        time.sleep(60)
-        cptime += 1
-        print("\rTime spent: %s min" % (cptime), end="")
+    if allVariables.LinuxVM:
         res = runningVms()
+        
+        request = [allVariables.VBoxManage, 'startvm', allVariables.LinuxVM]
+        if not allVariables.LinuxVM in res.stdout.decode():
+            ## Start ubuntu machine
+            print("Ubuntu Start")
+            p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+            (output, err) = p.communicate()
+            p_status = p.wait()
 
-    print("\nUbuntu stop")
+
+        res = runningVms()
+        
+        cptime = 0
+        while allVariables.LinuxVM in res.stdout.decode():
+            time.sleep(60)
+            cptime += 1
+            print("\rTime spent: %s min" % (cptime), end="")
+            res = runningVms()
+
+        print("\nUbuntu stop")
+    else:
+        for content in os.listdir(allVariables.pathToConvert):
+            appchemin = os.path.join(allVariables.pathToConvert, content)
+            if os.path.isfile(appchemin):
+                app_status = content.split(".")[0]
+                app = app_status.split("_")[0]
+                
+                Get_Fls_Strings.fls(appchemin, cheminOut, app_status)
+
+                Get_Fls_Strings.getStrings(appchemin, app, cheminOut, app_status)
 
     ## Suppresson of the current tmp file 
     os.remove(os.path.dirname(sys.argv[0]) + "/tmp")
     ## Suppression of the current raw disk
-    os.remove(convert_file)"""
+    os.remove(convert_file)
 
 
 ## AutoGeneYara
