@@ -46,7 +46,7 @@ If scripts are run under a Windows machine, some tools are required:
 
 
 
-<img src="B:\git\factual-rules-generator\img\StructureAutoGene.png" alt="StructureAutoGene" style="zoom: 80%;" />
+<img src="https://github.com/CIRCL/factual-rules-generator/blob/main/img/StructureAutoGene.png?raw=true" alt="alt text" style="zoom:80%;" />
 
 
 
