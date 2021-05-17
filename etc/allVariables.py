@@ -1,5 +1,5 @@
 #Path to the list that contains software to install: "nameOfPackage":"nameOfExe"
-applist = ""
+applist = "tests/listapp.txt"
 
 #Settings for server flask
 host = "0.0.0.0"

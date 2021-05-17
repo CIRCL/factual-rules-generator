@@ -23,10 +23,6 @@ if __name__ == '__main__':
     port = 5000
 
     (r, dic) = request(adress_server, port)
-    for d in dic:
-        if d == "stop":
-            (r, dic) = request(adress_server, port)
-        break
 
     if "uninstaller" in r.url:
         for d in dic:
