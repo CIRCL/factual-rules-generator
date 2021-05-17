@@ -25,7 +25,7 @@ If scripts are run under a Windows machine, some tools are required:
 
 ## Install
 
-- Install all python dependencies
+- Install all python dependencies find in requirements.txt
 - Install a Windows VM
     - Install chocolatey on windows vm: https://docs.chocolatey.org/en-us/choco/setup
 - If use a Linux VM, install it
@@ -42,7 +42,7 @@ If scripts are run under a Windows machine, some tools are required:
 
 
 
-
+## Structure
 
 
 
