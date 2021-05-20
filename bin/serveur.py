@@ -4,9 +4,9 @@ import sys
 import time
 import flask
 import pathlib
-p = pathlib.Path(__file__).parent.absolute()
+pathProg = pathlib.Path(__file__).parent.absolute()
 s = ""
-for i in re.split(r"/|\\", str(p))[:-1]:
+for i in re.split(r"/|\\", str(pathProg))[:-1]:
     s += i + "/"
 sys.path.append(s + "etc")
 import allVariables
@@ -32,7 +32,7 @@ list_app = list(lapp.keys())
 #exit(0)
 
 def WriteFileP(s, current):
-    f = open(os.path.dirname(sys.argv[0]) + "/tmp", "w")
+    f = open(pathProg + "/tmp", "w")
     f.write(s + ":" + current)
     f.close()
 

@@ -6,9 +6,9 @@ import get_pe
 import datetime
 import subprocess
 import pathlib
-p = pathlib.Path(__file__).parent.absolute()
+pathProg = pathlib.Path(__file__).parent.absolute()
 s = ""
-for i in re.split(r"/|\\", str(p))[:-1]:
+for i in re.split(r"/|\\", str(pathProg))[:-1]:
     s += i + "/"
 sys.path.append(s + "etc")
 import allVariables
@@ -23,7 +23,7 @@ def runningVms():
     return subprocess.run(req, capture_output=True)
 
 def readFile():
-    f = open(os.path.dirname(sys.argv[0]) + "/tmp","r")
+    f = open(pathProg + "/tmp","r")
     l = f.readline().rstrip()
     f.close()
     return l

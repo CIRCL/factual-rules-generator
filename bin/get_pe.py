@@ -9,8 +9,6 @@ for i in re.split(r"/|\\", str(p))[:-1]:
     s += i + "/"
 sys.path.append(s + "etc")
 import allVariables
-sys.path.append(s + "etc")
-import allVariables
 
 def pe_yara(file_pe):
     pe =  pefile.PE(file_pe)
