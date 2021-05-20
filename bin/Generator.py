@@ -1,12 +1,17 @@
 import os
+import re
 import sys
 import time
 import get_pe
 import datetime
 import subprocess
+import pathlib
+p = pathlib.Path(__file__).parent.absolute()
 s = ""
-for i in os.path.dirname(sys.argv[0]).split("/")[:-1]:
+for i in re.split(r"/|\\", str(p))[:-1]:
     s += i + "/"
+sys.path.append(s + "etc")
+import allVariables
 sys.path.append(s + "etc")
 import allVariables
 import OnLinux.get_Fls_Strings

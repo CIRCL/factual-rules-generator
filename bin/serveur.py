@@ -1,18 +1,15 @@
 import os
+import re
 import sys
 import time
 import flask
+import pathlib
+p = pathlib.Path(__file__).parent.absolute()
 s = ""
-for i in os.path.dirname(sys.argv[0]).split("/")[:-1]:
+for i in re.split(r"/|\\", str(p))[:-1]:
     s += i + "/"
 sys.path.append(s + "etc")
 import allVariables
-
-
-def WriteFileP(s, current):
-    f = open(os.path.dirname(sys.argv[0]) + "/tmp", "w")
-    f.write(s + ":" + current)
-    f.close()
 
 
 app = flask.Flask(__name__)
@@ -31,6 +28,13 @@ for l in listapp:
     lapp[l[0]] = l[1].rstrip(("\n"))
 
 list_app = list(lapp.keys())
+#print(list_app)
+#exit(0)
+
+def WriteFileP(s, current):
+    f = open(os.path.dirname(sys.argv[0]) + "/tmp", "w")
+    f.write(s + ":" + current)
+    f.close()
 
 @app.route('/', methods=['GET'])
 def home():
