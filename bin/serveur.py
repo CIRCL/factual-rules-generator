@@ -32,7 +32,7 @@ list_app = list(lapp.keys())
 #exit(0)
 
 def WriteFileP(s, current):
-    f = open(pathProg + "/tmp", "w")
+    f = open(str(pathProg) + "/tmp", "w")
     f.write(s + ":" + current)
     f.close()
 

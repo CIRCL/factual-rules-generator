@@ -45,6 +45,7 @@ if __name__ == '__main__':
             (output, err) = p.communicate()
             p_status = p.wait()
             
+            print("choco install: " + output.decode())
             print("install finish\n")
             
             # get the past to the app
@@ -60,12 +61,15 @@ if __name__ == '__main__':
 
             time.sleep(10)
             
-            parent = psutil.Process(p.pid)
-            children = parent.children(recursive=True)
-            print(children)
-            child_pid = children[0].pid
-            
-            subprocess.check_output("Taskkill /PID %d /F" % child_pid)
+            if psutil.pid_exists(p.pid):
+                parent = psutil.Process(p.pid)
+                children = parent.children(recursive=True)
+                for child_pid in children:
+                    if psutil.pid_exists(child_pid.pid):
+                        try:
+                            subprocess.check_output("Taskkill /PID %d /F /T" % child_pid.pid)
+                        except:
+                            pass
             
             
             # copy the app on the share folder of the vm

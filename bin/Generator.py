@@ -12,18 +12,16 @@ for i in re.split(r"/|\\", str(pathProg))[:-1]:
     s += i + "/"
 sys.path.append(s + "etc")
 import allVariables
-sys.path.append(s + "etc")
-import allVariables
 import OnLinux.get_Fls_Strings
 import automatisation_yara
 
 
 def runningVms():
-    req = '%s list runningvms' % (allVariables.VBoxManage)
+    req = [allVariables.VBoxManage, "list", "runningvms"]
     return subprocess.run(req, capture_output=True)
 
 def readFile():
-    f = open(pathProg + "/tmp","r")
+    f = open(str(pathProg) + "/tmp","r")
     l = f.readline().rstrip()
     f.close()
     return l
@@ -36,7 +34,10 @@ def create_rule(ext, hexa, product_version, l_app):
     date = datetime.datetime.now()
 
     ##Headers of yara rule
-    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[1])
+    if app:
+        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[1])
+    else:
+        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[0], ext[1])
 
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[0]))
     rules += 'author = "David Cruciani"\n\t\t'
@@ -52,6 +53,13 @@ def create_rule(ext, hexa, product_version, l_app):
     rules += "\tcondition:\n\t\t$h\n}"
 
     return rules
+
+
+def runAuto(s):
+    pathS = os.path.join(allVariables.pathToStrings, s)
+    if os.path.isfile(pathS):
+        print(s)
+        automatisation_yara.inditif(pathS, ProductVersion, l_app)
 
 
 if __name__ == '__main__':
@@ -73,7 +81,7 @@ if __name__ == '__main__':
         if not allVariables.WindowsVM in res.stdout.decode():
             ## Start windows machine
             print("Windows Start")
-            p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+            p = subprocess.Popen(request, stdout=subprocess.PIPE)
             (output, err) = p.communicate()
             p_status = p.wait()
 
@@ -133,12 +141,12 @@ if __name__ == '__main__':
                     app_status = content.split(".")[0]
                     app = app_status.split("_")[0]
                     
-                    Get_Fls_Strings.fls(appchemin, cheminOut, app_status)
+                    OnLinux.get_Fls_Strings.fls(appchemin, allVariables.pathToStrings, app_status)
 
-                    Get_Fls_Strings.getStrings(appchemin, app, cheminOut, app_status)
+                    OnLinux.get_Fls_Strings.getStrings(appchemin, app, allVariables.pathToStrings, app_status)
 
         ## Suppresson of the current tmp file 
-        os.remove(os.path.dirname(sys.argv[0]) + "/tmp")
+        os.remove(str(pathProg) + "/tmp")
         ## Suppression of the current raw disk
         os.remove(convert_file)
 
@@ -155,7 +163,14 @@ if __name__ == '__main__':
             print(rule)
             automatisation_yara.save_rule(c[0], c[1], rule)
 
-    for content in os.listdir(allVariables.pathToStrings):
-        chemin = os.path.join(allVariables.pathToStrings, content)
-        if os.path.isfile(chemin):
-            automatisation_yara.inditif(chemin, ProductVersion, l_app)
+            s = "@%s@fls_install.tree" % (c[0])
+            runAuto(s)
+            
+            s = "@%s@fls_uninstall.tree" % (c[0])
+            runAuto(s)
+
+            s = "@%s@install.txt" % (c[0])
+            runAuto(s)
+
+            s = "@%s@uninstall.txt" % (c[0])
+            runAuto(s)
