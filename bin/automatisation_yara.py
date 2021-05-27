@@ -23,7 +23,10 @@ def create_rule(ext, s, product_version, flag, l_app):
     date = datetime.datetime.now()
 
     ##Headers of yara rule
-    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[2])
+    if app:
+        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[2])
+    else:
+        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[1], ext[2])
 
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
