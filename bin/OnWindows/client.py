@@ -46,15 +46,17 @@ if __name__ == '__main__':
             p_status = p.wait()
             
             print("choco install: " + output.decode())
-            print("install finish\n")
+            print("[*] install finish\n")
             
             # get the past to the app
+            print("[+] Path to exe search...")
             request = ["cd", "/", "&", "dir", "/s", "/b", "%s.exe" % (dic[d])]
 
             p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
             (output, err) = p.communicate()
             p_status = p.wait()
             
+            print("[+] Run exe...")
             path = output.decode().split("\n")[0].rstrip("\n\r")
             
             p = subprocess.Popen(path, stdout=subprocess.PIPE, shell=True)
@@ -73,6 +75,7 @@ if __name__ == '__main__':
             
             
             # copy the app on the share folder of the vm
+            print("[+] Copy exe...")
             r = 'copy "' + path + '" \\\VBOXSVR\PartageVM\exe_extract' ## change the last paramaeter 
             
             p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
