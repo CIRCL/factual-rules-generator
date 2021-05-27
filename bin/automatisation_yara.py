@@ -1,3 +1,4 @@
+import os
 import re
 import string
 import datetime
@@ -55,9 +56,19 @@ def create_rule(ext, s, product_version, flag, l_app):
     return rules
 
 ###Save of the rule on the disk
-def save_rule(ext1, ext2, rules):
-    yara_rule = open("%s\\%s_%s.yar" % (allVariables.pathToYaraSave, ext1, ext2), "w")
+def save_rule(ext1, ext2, rules, flag):
+    chemin = None
+    if flag == 3:
+        chemin = os.path.join(allVariables.pathToYaraSave, "exe")
+    elif flag:
+        chemin = os.path.join(allVariables.pathToYaraSave, "tree")
+    else:
+        chemin = os.path.join(allVariables.pathToYaraSave, "txt")
 
+    if not os.path.isdir(chemin):
+        os.mkdir(chemin)
+
+    yara_rule = open("%s/%s_%s.yar" % (chemin, ext1, ext2), "w")
     yara_rule.write(rules)
     yara_rule.close()
 
@@ -70,7 +81,8 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
 
     if allVariables.pathToFirstStringsMachine:
         first = open(allVariables.pathToFirstStringsMachine)
-        full = first.readlines()    
+        full = first.readlines()
+        first.close()
 
     ## Extract the term to search
     try:
@@ -112,7 +124,7 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
     #exit(0)
 
     ###Save of the rule on the disk
-    save_rule(ext[1], ext[2], rules)
+    save_rule(ext[1], ext[2], rules, flag)
 
 
 

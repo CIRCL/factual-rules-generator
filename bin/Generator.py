@@ -161,7 +161,7 @@ if __name__ == '__main__':
             c = content.split(".")
             rule = create_rule(c, hexa, ProductVersion, l_app)
             print(rule)
-            automatisation_yara.save_rule(c[0], c[1], rule)
+            automatisation_yara.save_rule(c[0], c[1], rule, 3)
 
             s = "@%s@fls_install.tree" % (c[0])
             runAuto(s)
