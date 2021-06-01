@@ -1,6 +1,9 @@
 #Path to the list that contains software to install: "nameOfPackage":"nameOfExe"
 applist = "tests/listapp.txt"
 
+#Path to list of special software
+blockProg = ""
+
 #Settings for server flask
 host = "0.0.0.0"
 port = "5000"

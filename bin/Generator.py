@@ -22,9 +22,20 @@ def runningVms():
 
 def readFile():
     f = open(str(pathProg) + "/tmp","r")
+    f1 = open(allVariables.blockProg, "r")
+
     l = f.readline().rstrip()
+    l1 = f1.readlines()
+
     f.close()
-    return l
+    f1.close()
+
+    listTmp = [l.split(":")[0],l.split(":")[1]]
+
+    for line in l1:
+        if line.split(":")[0] == listTmp[1]:
+            return [listTmp[0], line.split(":")[1]]
+    return listTmp
 
 def create_rule(ext, hexa, product_version, l_app):
     app = ""
@@ -104,7 +115,7 @@ if __name__ == '__main__':
         partage = allVariables.pathToConvert
         status = readFile()
 
-        convert_file = "%s%s_%s.img" %(partage, status.split(":")[1], status.split(":")[0])
+        convert_file = "%s%s_%s.img" %(partage, status[1], status[0])
 
         print("## Convertion ##")
         ############### Mettre plutot le nom de l'exe pour la machine linux pour faire un grep -i direct en fonction du nom
