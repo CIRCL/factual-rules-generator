@@ -7,10 +7,10 @@ import datetime
 import subprocess
 import pathlib
 pathProg = pathlib.Path(__file__).parent.absolute()
-s = ""
+pathWork = ""
 for i in re.split(r"/|\\", str(pathProg))[:-1]:
-    s += i + "/"
-sys.path.append(s + "etc")
+    pathWork += i + "/"
+sys.path.append(pathWork + "etc")
 import allVariables
 import OnLinux.get_Fls_Strings
 import automatisation_yara
@@ -22,7 +22,7 @@ def runningVms():
 
 def readFile():
     f = open(str(pathProg) + "/tmp","r")
-    f1 = open(allVariables.blockProg, "r")
+    f1 = open(pathWork + "etc/blockProg.txt", "r")
 
     l = f.readline().rstrip()
     l1 = f1.readlines()
@@ -30,11 +30,11 @@ def readFile():
     f.close()
     f1.close()
 
-    listTmp = [l.split(":")[0],l.split(":")[1]]
+    listTmp = [l.split(":")[0],l.split(":")[1].rstrip("\n")]
 
     for line in l1:
         if line.split(":")[0] == listTmp[1]:
-            return [listTmp[0], line.split(":")[1]]
+            return [listTmp[0], line.split(":")[1].rstrip("\n")]
     return listTmp
 
 def create_rule(ext, hexa, product_version, l_app):
