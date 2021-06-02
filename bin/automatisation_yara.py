@@ -1,8 +1,9 @@
 import os
 import re
+import sys
+import uuid
 import string
 import datetime
-import sys
 import pathlib
 p = pathlib.Path(__file__).parent.absolute()
 s = ""
@@ -31,7 +32,8 @@ def create_rule(ext, s, product_version, flag, l_app):
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
-    rules += 'versionApp = "%s"\n\t' % (product_version)
+    rules += 'versionApp = "%s"\n\t\t' % (product_version)
+    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid1()))
 
     rules += "strings: \n"
 
@@ -84,8 +86,13 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
 
     if allVariables.pathToFirstStringsMachine:
         first = open(allVariables.pathToFirstStringsMachine)
-        full = first.readlines()
-        first.close()
+        full = first.readlines() 
+        first.close()   
+
+    if allVariables.pathToFirstFls:
+        flsFile = open(allVariables.pathToFirstFls, "r")
+        fls = flsFile.readlines()
+        flsFile.close()
 
     ## Extract the term to search
     try:
@@ -98,7 +105,7 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
     for i in range(0,len(file_strings)):
         ## the file is not a tree
         if not flag:
-            ## there's a file who contains some strings about a software on a virgin machine
+            ## there's a file who contains some strings about a software on a vanilla machine
             if allVariables.pathToFirstStringsMachine:
                 if ((not len(file_strings[i].split(" ")) > 5 and not len(file_strings[i]) > 30) \
                     or (len(file_strings[i].split(" ")) == 1 and not len(file_strings[i]) > 50)) \
@@ -112,9 +119,12 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
 
                         s.append(file_strings[i])
         else:
-            if (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
-
-                s.append(file_strings[i])
+            if allVariables.pathToFirstFls:
+                if ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in fls:
+                    s.append(file_strings[i])
+            else:
+                if (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
+                    s.append(file_strings[i])
 
     ## Suppression of the extension
     ext.append(str(ext[-1:][0].split(".")[0]))

@@ -34,5 +34,8 @@ cut = ""
 #Path to strings of Windows VM without software install
 pathToFirstStringsMachine = ""
 
+#Path to fls output of Windows VM without software install
+pathToFirstFls = ""
+
 #Path to save yara rule on pc
 pathToYaraSave = ""

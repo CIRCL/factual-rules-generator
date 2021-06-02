@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import uuid
 import time
 import get_pe
 import datetime
@@ -53,7 +54,8 @@ def create_rule(ext, hexa, product_version, l_app):
     rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[0]))
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
-    rules += 'versionApp = "%s"\n\t' % (product_version)
+    rules += 'versionApp = "%s"\n\t\t' % (product_version)
+    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid1()))
 
     rules += "strings: \n"
 
@@ -64,7 +66,6 @@ def create_rule(ext, hexa, product_version, l_app):
     rules += "\tcondition:\n\t\t$h\n}"
 
     return rules
-
 
 def runAuto(s):
     pathS = os.path.join(allVariables.pathToStrings, s)
