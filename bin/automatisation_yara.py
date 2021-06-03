@@ -15,7 +15,7 @@ import allVariables
 
 
 ####Creation of yara rule
-def create_rule(ext, s, product_version, flag, l_app):
+def create_rule(ext, s, product_version, l_app):
     app = ""
     for l in l_app:
         if l.split(":")[1].rstrip("\n") == ext[1]:
@@ -33,7 +33,7 @@ def create_rule(ext, s, product_version, flag, l_app):
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
     rules += 'versionApp = "%s"\n\t\t' % (product_version)
-    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid1()))
+    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid4()))
 
     rules += "strings: \n"
 
@@ -44,13 +44,10 @@ def create_rule(ext, s, product_version, flag, l_app):
         reg = ""
         r+=1
         for car in regle:
-            if car in string.ascii_letters or car in string.digits or car == " " or car == "\t":
+            if car in string.ascii_letters or car in string.digits or car == " ":
                 reg += car
             elif car in string.punctuation:
                 reg += "\\" + car
-        ## if file is a tree, split to have only the interesting part 
-        if flag:
-            reg = str(reg).split("\t")[1]
  
         rules += "\t\t$s%s = /%s/\n" % (str(r), reg)
 
@@ -119,19 +116,20 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
 
                         s.append(file_strings[i])
         else:
+            f_str = str(file_strings[i]).split("\t")[1]
             if allVariables.pathToFirstFls:
-                if ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in fls:
-                    s.append(file_strings[i])
+                if ((ext[1] in f_str or ext[1].lower() in f_str or ext[1].upper() in f_str) and f_str not in s) and f_str not in fls:
+                    s.append(f_str)
             else:
-                if (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
-                    s.append(file_strings[i])
+                if (ext[1] in f_str or ext[1].lower() in f_str or ext[1].upper() in f_str) and f_str not in s:
+                    s.append(f_str)
 
     ## Suppression of the extension
     ext.append(str(ext[-1:][0].split(".")[0]))
     del(ext[-2:-1])
 
     ####Creation of yara rule
-    rules = create_rule(ext, s, file_version, flag, l_app)
+    rules = create_rule(ext, s, file_version, l_app)
 
     print(rules)
     #exit(0)

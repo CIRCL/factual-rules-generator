@@ -16,6 +16,11 @@ import allVariables
 import OnLinux.get_Fls_Strings
 import automatisation_yara
 
+def blockProg():
+    f1 = open(pathWork + "etc/blockProg.txt", "r")
+    l1 = f1.readlines()
+    f1.close()
+    return l1
 
 def runningVms():
     req = [allVariables.VBoxManage, "list", "runningvms"]
@@ -23,13 +28,11 @@ def runningVms():
 
 def readFile():
     f = open(str(pathProg) + "/tmp","r")
-    f1 = open(pathWork + "etc/blockProg.txt", "r")
 
     l = f.readline().rstrip()
-    l1 = f1.readlines()
+    l1 = blockProg()
 
     f.close()
-    f1.close()
 
     listTmp = [l.split(":")[0],l.split(":")[1].rstrip("\n")]
 
@@ -55,7 +58,7 @@ def create_rule(ext, hexa, product_version, l_app):
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
     rules += 'versionApp = "%s"\n\t\t' % (product_version)
-    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid1()))
+    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid4()))
 
     rules += "strings: \n"
 
@@ -167,10 +170,14 @@ if __name__ == '__main__':
     hexa = "" 
     ProductVersion = ""
     for content in os.listdir(allVariables.pathToShareWindows):
+        l = blockProg()
+        c = content.split(".")
+        for line in l:
+            if line.split(":")[0] == c[0]:
+                c[0] = line.split(":")[1].rstrip("\n")
         chemin = os.path.join(allVariables.pathToShareWindows, content)
         if os.path.isfile(chemin):
             (hexa, ProductVersion) = get_pe.pe_yara(chemin)
-            c = content.split(".")
             rule = create_rule(c, hexa, ProductVersion, l_app)
             print(rule)
             automatisation_yara.save_rule(c[0], c[1], rule, 3)
