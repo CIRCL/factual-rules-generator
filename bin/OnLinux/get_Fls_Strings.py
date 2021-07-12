@@ -1,7 +1,6 @@
 #!/bin/python3
 
 import os
-import time
 import subprocess
 
 def fls(cheminMachine, cheminOut, app_status):
@@ -37,6 +36,7 @@ def fls(cheminMachine, cheminOut, app_status):
 
 
 	r = "fls -r -o %s %s > %s@%s@fls_%s.tree" % (str(offset), cheminMachine, cheminOut, app_status.split("_")[0], app_status.split("_")[1])
+	print("[+] Fls for %s" % (app_status.split("_")[0]))
 
 	p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
 	(output, err) = p.communicate()
@@ -51,7 +51,7 @@ def fls(cheminMachine, cheminOut, app_status):
 	
 def getStrings(appchemin, app, cheminOut, app_status):
 	r = "strings %s | grep -i %s > %s@%s@%s.txt" % (appchemin, app, cheminOut, app_status.split("_")[0], app_status.split("_")[1])
-	print(r)
+	print("[+] Strings for %s" % (app_status.split("_")[0]))
 	
 	p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
 	(output, err) = p.communicate()
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
 			getStrings(appchemin, app, cheminOut, app_status)
 			
-	print("finish")
+	print("[+] Shutdown in 20 sec")
 	
 
 	subprocess.call("shutdown -h -t 20", shell=True)

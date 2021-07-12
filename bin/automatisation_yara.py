@@ -29,7 +29,7 @@ def create_rule(ext, s, product_version, l_app):
     else:
         rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[1], ext[2])
 
-    rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[1]))
+    rules += 'description = "Auto generation for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
     rules += 'versionApp = "%s"\n\t\t' % (product_version)
@@ -53,19 +53,16 @@ def create_rule(ext, s, product_version, l_app):
 
     ##End of yara rule
     ## 1.25 is a coefficient to match the rule, which leaves a margin of error
-    rules += "\tcondition:\n\t\t%s of ($s*)\n}" % (str(int(r/1.25)))
+    #rules += "\tcondition:\n\t\t%s of ($s*)\n}" % (str(int(r/1.25)))
+    rules += "\tcondition:\n\t\t ext_var of ($s*)\n}" 
 
     return rules
 
 ###Save of the rule on the disk
-def save_rule(ext1, ext2, rules, flag):
-    chemin = None
-    if flag == 3:
-        chemin = os.path.join(allVariables.pathToYaraSave, "exe")
-    elif flag:
-        chemin = os.path.join(allVariables.pathToYaraSave, "tree")
-    else:
-        chemin = os.path.join(allVariables.pathToYaraSave, "txt")
+def save_rule(ext1, ext2, rules, flag = False):
+    chemin = os.path.join(allVariables.pathToYaraSave, ext1)
+    if flag:
+        chemin = os.path.join(chemin, "tree")
 
     if not os.path.isdir(chemin):
         os.mkdir(chemin)
@@ -75,13 +72,17 @@ def save_rule(ext1, ext2, rules, flag):
     yara_rule.close()
 
 
-def file_create_rule(chemin, file_version, l_app, flag = False):
+def file_create_rule(chemin, file_version, l_app, stringProg, flag = False):
     s = list()
 
     f = open(chemin, "r")
     file_strings = f.readlines()
 
-    if allVariables.pathToFirstStringsMachine:
+    if stringProg:
+        first = open(stringProg)
+        full = first.readlines() 
+        first.close()
+    elif allVariables.pathToFirstStringsMachine:
         first = open(allVariables.pathToFirstStringsMachine)
         full = first.readlines() 
         first.close()   
@@ -106,13 +107,13 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
             if allVariables.pathToFirstStringsMachine:
                 if ((not len(file_strings[i].split(" ")) > 5 and not len(file_strings[i]) > 30) \
                     or (len(file_strings[i].split(" ")) == 1 and not len(file_strings[i]) > 50)) \
-                    and ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in full:
+                    and ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in full:
 
                         s.append(file_strings[i])
             else:
                 if ((not len(file_strings[i].split(" ")) > 5 and not len(file_strings[i]) > 30) \
                     or (len(file_strings[i].split(" ")) == 1 and not len(file_strings[i]) > 50)) \
-                    and (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i]) and file_strings[i] not in s:
+                    and (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
 
                         s.append(file_strings[i])
         else:
@@ -140,7 +141,7 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
 
 
 
-def inditif(fichier, file_version, l_app):
+def inditif(fichier, file_version, l_app, stringProg):
     try:
         extension = fichier.split(".")[1]
     except:
@@ -149,6 +150,6 @@ def inditif(fichier, file_version, l_app):
 
     ## the file is a tree
     if fichier.split(".")[1] == "tree":
-        file_create_rule(fichier, file_version, l_app, True)
+        file_create_rule(fichier, file_version, l_app, stringProg, True)
     else:
-        file_create_rule(fichier, file_version, l_app)
+        file_create_rule(fichier, file_version, l_app, stringProg)
