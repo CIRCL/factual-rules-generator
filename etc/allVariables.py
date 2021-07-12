@@ -5,6 +5,8 @@ applist = "tests/listapp.txt"
 host = "0.0.0.0"
 port = "5000"
 
+#Path to folder that contains software installer
+pathToInstaller = ""
 #Path to VBoxManage
 VBoxManage = "C:\\Program Files\Oracle\VirtualBox\VBoxManage.exe"
 
