@@ -2,6 +2,7 @@ import os
 import ast
 import time
 import psutil
+import VarClient
 import subprocess
 
 # put client.exe in the startup folder, windows+r and shell:startup
@@ -13,19 +14,43 @@ def appManager(status, installer, app):
             return "choco uninstall -y %s" % (app)
     elif installer == "msiexec":
         if status:
-            return "msiexec /i \\\VBOXSVR\\PartageVM\\Installer\\installer\\%s /qn" % (app)
+            return "msiexec /i %s%s /qn" % (VarClient.pathToInstaller + "\\installer\\", app)
         else:
-            return "msiexec /x \\\VBOXSVR\\PartageVM\\Installer\\installer\\%s /qn" % (app)
+            return "msiexec /x %s%s /qn" % (VarClient.pathToInstaller + "\\installer\\", app)
     elif installer == "exe":
         if status:
-            return "\\\VBOXSVR\\PartageVM\\Installer\\installer\\%s /s /v\"/qn\"" % (app)
+            return "%s%s /s /v\"/qn\"" % (VarClient.pathToInstaller, app)
         else:
-            return "\\\VBOXSVR\\PartageVM\\UninstallX64.exe %s" % (app)
+            return "%s %s" % (VarClient.pathToUninstaller, app)
+
+def sync():
+    if VarClient.pathToSync:
+        print("[+] Sync")
+        request = [VarClient.pathToSync, "c"]
+        p = subprocess.Popen(request, stdout=subprocess.PIPE)
+        (output, err) = p.communicate()
+        p_status = p.wait()
+        try:
+            print(output.decode())
+        except:
+            pass
+
+def copyBigFile():
+    if VarClient.pathToCopy:
+        print("[+] Copy of big file")
+        request = ["copy", VarClient.pathToCopy, "C:\\Users\\Administrateur\\Downloads"]
+        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+        (output, err) = p.communicate()
+        p_status = p.wait()
+        try:
+            print(output.decode())
+        except:
+            pass
     
 
 if __name__ == '__main__':
-    for content in os.listdir("\\\VBOXSVR\PartageVM\Installer"):
-        chemin = os.path.join("\\\VBOXSVR\PartageVM\Installer", content)
+    for content in os.listdir(VarClient.pathToInstaller):
+        chemin = os.path.join(VarClient.pathToInstaller, content)
         if os.path.isfile(chemin):
             f = open(chemin, "r")
             l = f.readline()
@@ -34,7 +59,7 @@ if __name__ == '__main__':
             key = list(dic.keys())
 
             if "uninstall" in content:
-                print("unin")
+                print("[*] Uninstallation")
                 #exit(0)
                 request = appManager(False, dic[key[1]], key[0])
                 print(request)
@@ -45,8 +70,12 @@ if __name__ == '__main__':
 
                 if "exe" == dic[key[1]]:
                     input("\nEnter when finish")
-                
-                print("uninstall finish")
+
+                sync()
+                copyBigFile()
+                sync()
+
+                print("[*] Uninstall finish")
             else:
                 print("[*] Installation")
                 #exit(0)
@@ -56,7 +85,8 @@ if __name__ == '__main__':
                 (output, err) = p.communicate()
                 p_status = p.wait()
                 
-                print("[+] Output installation: " + output.decode())
+                if dic[key[1]] == "choco":
+                    print("[+] Output installation: " + output.decode())
 
                 print("[*] Install finish\n")
                 
@@ -73,7 +103,7 @@ if __name__ == '__main__':
                 
                 # copy the app on the share folder of the vm
                 print("[+] Copy exe...")
-                r = 'copy "' + path + '" \\\VBOXSVR\PartageVM\exe_extract'
+                r = 'copy "' + path + '"' + VarClient.pathToExeExtract
                 
                 p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
                 (output, err) = p.communicate()
@@ -86,6 +116,7 @@ if __name__ == '__main__':
 
                 time.sleep(10)
                 
+                # search for the pid created by the above subprocess and kill it
                 if psutil.pid_exists(p.pid):
                     parent = psutil.Process(p.pid)
                     children = parent.children(recursive=True)
