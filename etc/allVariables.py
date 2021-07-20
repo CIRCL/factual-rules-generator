@@ -32,6 +32,8 @@ pathToStrings = ""
 xxd = ""
 #Path to cut
 cut = ""
+#Path to sed
+sed = ""
 
 #Path to strings of Windows VM without software install
 pathToFirstStringsMachine = ""
@@ -41,3 +43,5 @@ pathToFirstFls = ""
 
 #Path to save yara rule on pc
 pathToYaraSave = ""
+#Path to the folder who will contains AsaReport
+pathToAsaReport = ""

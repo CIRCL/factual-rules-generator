@@ -78,15 +78,17 @@ def file_create_rule(chemin, file_version, l_app, stringProg, flag = False):
     f = open(chemin, "r")
     file_strings = f.readlines()
 
+    ## First Strings execute for better performance
     if stringProg:
         first = open(stringProg)
         full = first.readlines() 
         first.close()
+    ## Strings of the vanilla machine
     elif allVariables.pathToFirstStringsMachine:
         first = open(allVariables.pathToFirstStringsMachine)
         full = first.readlines() 
         first.close()   
-
+    ## Fls of the vanilla machine
     if allVariables.pathToFirstFls:
         flsFile = open(allVariables.pathToFirstFls, "r")
         fls = flsFile.readlines()
@@ -116,6 +118,7 @@ def file_create_rule(chemin, file_version, l_app, stringProg, flag = False):
                     and (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
 
                         s.append(file_strings[i])
+        ## the file is a tree
         else:
             f_str = str(file_strings[i]).split("\t")[1]
             if allVariables.pathToFirstFls:
