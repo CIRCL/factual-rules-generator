@@ -1,1 +1,1 @@
-notepadplusplus:notepad++
+putty.msi:putty,installer:msiexec

@@ -1,4 +1,4 @@
-notepadplusplus:notepad++
-putty.install:putty
-googlechrome:chrome
-winrar:winrar
+notepadplusplus:notepad++,installer:choco
+putty.msi:putty,installer:msiexec
+googlechrome:chrome,installer:choco
+winrar:winrar,installer:choco

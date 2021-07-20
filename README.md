@@ -7,10 +7,12 @@ Factual-rules-generator is an open source project which aims to generate yara ru
 ## Python Dependencies
 
 - pefile
-- flask
 - ast
 - psutil
-- requests
+
+
+
+- pyinstaller (to change client.py to client.exe)
 
 
 
@@ -18,10 +20,26 @@ Factual-rules-generator is an open source project which aims to generate yara ru
 
 If scripts are run under a Windows machine, some tools are required:
 
-- xxd : https://www.vim.org/download.php
-- cut : http://unxutils.sourceforge.net/
+- `xxd` : https://www.vim.org/download.php
+- `cut` : http://unxutils.sourceforge.net/
+- `sed` : http://unxutils.sourceforge.net/
 
 
+
+These tools are not mandatory but recommended:
+
+- Asa (AttackSurfaceAnalyzer) : https://github.com/microsoft/AttackSurfaceAnalyzer
+- Sync : https://docs.microsoft.com/en-us/sysinternals/downloads/sync
+- Uninstall : https://tarma.com/tools/uninstall
+
+
+
+## Linux requirement
+
+There's two tools necessary on the linux machine:
+
+- `fls` contains in The Sleuth Kit (TSK)
+- `strings` unix command
 
 ## Install
 
@@ -30,12 +48,14 @@ If scripts are run under a Windows machine, some tools are required:
 - Install a Windows VM
     - Install chocolatey on Windows VM: https://docs.chocolatey.org/en-us/choco/setup
     
+- A Share Folder is needed
+
 - If use a Linux VM, install it
     - put `bin/OnLinux/get_Fls_Strings.py` in Linux VM and the script need to be run on startup
     
 - Complete `etc/allVariables.py`
 
-- Add IP adress of the server and share folder in `bin/OnWindows/client.py` at specific lines
+- Compete `bin/OnWindows/VarClient.py`
 
 - Change `bin/OnWindows/client.py` in an exe and put in startup folder
 
@@ -43,14 +63,19 @@ If scripts are run under a Windows machine, some tools are required:
 
 In `test/` some example of software to install is give, it's use a specific format : 
 
-- First, there's the name of the packages to install using choclatey (https://community.chocolatey.org/packages) before `:`
+- First, there's the name of the packages to install using chocolatey (https://community.chocolatey.org/packages) before `:`
+    - Or, you have to put the name of the exe or msi (`test/app.txt`)
 - Second, after `:` there's the name of the exe to extract and run it (without extension).
+- Finally, after `,` you need to specified the installer: (`putty.msi:putty,installer:msiexec`)
+    - choco
+    - msiexec
+    - exe
 
 
 
 ## Run 
 
-`bin/server.py` is the first script to run and `bin/Generator.py` is the second and the last.
+ `bin/Generator.py` is the only script to run.
 
 
 
