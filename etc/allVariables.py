@@ -1,10 +1,6 @@
 #Path to the list that contains software to install: "nameOfPackage":"nameOfExe"
 applist = "tests/listapp.txt"
 
-#Settings for server flask
-host = "0.0.0.0"
-port = "5000"
-
 #Path to folder that contains software installer
 pathToInstaller = ""
 #Path to VBoxManage
@@ -34,6 +30,8 @@ xxd = ""
 cut = ""
 #Path to sed
 sed = ""
+#Path to curl
+curl = ""
 
 #Path to strings of Windows VM without software install
 pathToFirstStringsMachine = ""

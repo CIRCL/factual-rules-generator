@@ -5,6 +5,7 @@ import json
 import uuid
 import time
 import get_pe
+import shutil
 import datetime
 import subprocess
 import pathlib
@@ -24,6 +25,16 @@ def blockProg():
     l1 = f1.readlines()
     f1.close()
     return l1
+
+def callSubprocessPopen(request, shellUse = False):
+    if shellUse:
+        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+        (output, err) = p.communicate()
+        p_status = p.wait()
+    else:
+        p = subprocess.Popen(request, stdout=subprocess.PIPE)
+        (output, err) = p.communicate()
+        p_status = p.wait()
 
 # Write the task into a file for the client
 def writeFile(app, uninstall):
@@ -110,7 +121,7 @@ def parseAsa(asaReport, currentApp):
         path += i["Compare"]["Path"] + "\n"
 
     ## Sed is apply to deleted the unwanted path specified in blocklistASA
-    filesed = allVariables.pathToYaraSave + "/" + currentApp + "/" + currentApp + "_Asa_report.txt"
+    filesed = "./" + currentApp + "_Asa_report.txt"
     with open(filesed, "w") as write_file:
         write_file.write(path)
 
@@ -128,9 +139,9 @@ def parseAsa(asaReport, currentApp):
     request.append(filesed)
     #print(request)
 
-    p = subprocess.Popen(request, stdout=subprocess.PIPE)
-    (output, err) = p.communicate()
-    p_status = p.wait()
+    callSubprocessPopen(request)
+
+    return filesed
 
 
 
@@ -166,6 +177,7 @@ if __name__ == '__main__':
         p_status = p.wait()
 
 
+    pathMnt = ""
     res = runningVms()
     j=0
     uninstall = False
@@ -267,6 +279,70 @@ if __name__ == '__main__':
                     ## Run Strings command
                     OnLinux.get_Fls_Strings.getStrings(appchemin, app, allVariables.pathToStrings, app_status)
 
+
+        ## Parsing of the Asa Report
+        if not uninstall:
+            if allVariables.pathToAsaReport:
+                print("[+] Parsing AsA Report")
+                ## Parsing
+                content = l_app[loc].split(".")[0] + "_install_Asa_compare.json"
+                chemin = os.path.join(allVariables.pathToAsaReport, content)
+                if os.path.isfile(chemin):
+                    filesed = parseAsa(chemin, nApp)
+                    ## read path collect by parser
+                    with open(filesed, "r") as read_file:
+                        AsaPath = read_file.readlines()
+
+                    ## create mount directory
+                    pathMnt = "./mnt_convert"
+                    if not os.path.isdir(pathMnt):
+                        os.mkdir(pathMnt)
+
+                    ## mount the convert image
+                    print("\t[+] Mount")
+                    request = "sudo mount -o loop,ro,noexec,noload,offset=$((512*104448)) " + convert_file + " " + pathMnt
+                    callSubprocessPopen(request, True)
+
+                    ## md5 for each file of AsaPath
+                    print("\t[+] Md5 Asa")
+                    for pathMd5 in AsaPath:
+                        pathMd5 = pathMnt + "/" + pathMd5.split(":")[1].rstrip("\n")[1:]
+                        pathMd5 = re.sub(r"\\","/", pathMd5)
+                        pathMd5 = pathMd5.split("/")
+
+                        ## Add "" for each folder who contains space caracters
+                        cp = 0
+                        for sp in pathMd5:
+                            for car in sp:
+                                if car == " ":
+                                    pathMd5[cp] = '"' + pathMd5[cp] + '"'
+                            cp += 1
+
+                        ## Reassemble the strings
+                        stringPath = ""
+                        for sp in pathMd5:
+                            stringPath += sp + "/"
+
+                        pathMd5 = stringPath[:-1]
+
+                        savePath =  allVariables.pathToYaraSave + "/" + nApp
+                        if not os.path.isdir(savePath):
+                            os.mkdir(savePath)
+
+                        request = "md5sum " + pathMd5 + " >> " + savePath + "/" + nApp + "_md5"
+                        callSubprocessPopen(request, True)
+
+                        request = "sha1sum " + pathMd5 + " >> " + savePath + "/" + nApp + "_sha1"
+                        callSubprocessPopen(request, True)
+
+                    ## umount the convert image
+                    print("\t[+] Umount")
+                    request = "sudo umount " + pathMnt
+                    callSubprocessPopen(request, True)
+
+                    ## Delete Asa path 
+                    os.remove(filesed)
+
         if i % 2 == 0:
             j += 1
             uninstall = True
@@ -276,10 +352,17 @@ if __name__ == '__main__':
         ## Suppression of the current raw disk
         os.remove(convert_file)
 
+    ## Suppression of mount folder
+    try:
+        shutil.rmtree(pathMnt)
+    except:
+        pass
     
     ## AutoGeneYara
     hexa = "" 
     ProductVersion = ""
+    listProduct = dict()
+    # Rule for Exe
     for content in os.listdir(allVariables.pathToShareWindows):
         l = blockProg()
         c = content.split(".")
@@ -292,29 +375,75 @@ if __name__ == '__main__':
             rule = create_rule(c, hexa, ProductVersion, l_app)
             print(rule)
             automatisation_yara.save_rule(c[0], c[1], rule)
+            listProduct[c[0]] = ProductVersion
 
-            s = "@%s@fls_install.tree" % (c[0])
-            runAuto(s, stringProg)
-            
-            s = "@%s@fls_uninstall.tree" % (c[0])
-            runAuto(s, stringProg)
+    # Rule for strings and fls
+    for content in os.listdir(allVariables.pathToStrings):
+        chemin = os.path.join(allVariables.pathToStrings, content)
+        if os.path.isfile(chemin):
+            softName = content.split("@")[1]
+            automatisation_yara.inditif(chemin, listProduct[softName], l_app, stringProg)
 
-            s = "@%s@install.txt" % (c[0])
-            runAuto(s, stringProg)
+    # Hashlookup
+    for content in os.listdir(allVariables.pathToYaraSave):
+        pathFolder = os.path.join(allVariables.pathToYaraSave, content)
+        if os.path.isdir(pathFolder):
+            md5File = pathFolder + "/" + content + "_md5"
+            sha1File = pathFolder + "/" + content + "_sha1"
 
-            s = "@%s@uninstall.txt" % (c[0])
-            runAuto(s, stringProg)
+            if os.path.isfile(md5File):
+                with open(md5File, "r") as md5Read:
+                    lines = md5Read.readlines()
+                    for line in lines:
+                        lineSplit = line.split(" ")
+                        request = "%s -s -X 'GET' 'https://hashlookup.circl.lu/lookup/md5/%s' -H 'accept: application/json'" % ( allVariables.curl, lineSplit[0].rstrip("\n") )
+                        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+                        (output, err) = p.communicate()
+                        p_status = p.wait()
 
+                        jsonResponse = json.loads(output.decode())
 
-    ## Parsing of the Asa Report
-    if allVariables.pathToAsa:
-        for content in os.listdir(allVariables.pathToAsaReport):
-            l = blockProg()
-            currentApp = content.split("_")[0]
-            for line in l:
-                if line.split(":")[0] == currentApp:
-                    currentApp = line.split(":")[1].rstrip("\n")
-            
-            chemin = os.path.join(allVariables.pathToAsaReport, content)
-            if os.path.isfile(chemin):
-                parseAsa(chemin, currentApp)
+                        if "message" in jsonResponse.keys():
+                            print(jsonResponse["message"])
+                        else:
+                            pathHash = os.path.join(pathFolder, "HashLookup")
+                            pathHashMd5 = os.path.join(pathHash, "md5")
+
+                            if not os.path.isdir(pathHash):
+                                os.mkdir(pathHash)
+                            if not os.path.isdir(pathHashMd5):
+                                os.mkdir(pathHashMd5)
+
+                            with open(pathHashMd5 + "/" + lineSplit[-1].rstrip("\n"), "w") as fileHash:
+                                fileHash.write(str(jsonResponse))
+                            #print(jsonResponse)
+            else:
+                print("There's no md5 file")
+
+            if os.path.isfile(sha1File):
+                with open(sha1File, "r") as sha1Read:
+                    lines = sha1Read.readlines()
+                    for line in lines:
+                        request = "%s -s -X 'GET' 'https://hashlookup.circl.lu/lookup/sha1/%s' -H 'accept: application/json'" % ( allVariables.curl, line.split(" ")[0].rstrip("\n") )
+                        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+                        (output, err) = p.communicate()
+                        p_status = p.wait()
+
+                        jsonResponse = json.loads(output.decode())
+
+                        if "message" in jsonResponse.keys():
+                            print(jsonResponse["message"])
+                        else:
+                            pathHash = os.path.join(pathFolder, "HashLookup")
+                            pathHashSha1 = os.path.join(pathHash, "sha1")
+
+                            if not os.path.isdir(pathHash):
+                                os.mkdir(pathHash)
+                            if not os.path.isdir(pathHashSha1):
+                                os.mkdir(pathHashSha1)
+
+                            with open(pathHashSha1 + "/" + lineSplit[-1].rstrip("\n"), "w") as fileHash:
+                                fileHash.write(str(jsonResponse))
+                            #print(jsonResponse)
+            else:
+                print("There's no sha1 file")
