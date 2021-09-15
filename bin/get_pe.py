@@ -21,7 +21,6 @@ def pe_yara(file_pe):
         f = pe.FileInfo[0]
     except:
         return "",""
-
     for fileinfo in pe.FileInfo[0]:
         if fileinfo.Key.decode() == 'StringFileInfo':
             string_table = fileinfo.StringTable[0]

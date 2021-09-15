@@ -1,9 +1,7 @@
 #Path to the list that contains software to install: "nameOfPackage":"nameOfExe"
 applist = "tests/listapp.txt"
 
-#Settings for server flask
-host = "0.0.0.0"
-port = "5000"
+pathToInstaller = ""
 
 #Path to VBoxManage
 VBoxManage = "C:\\Program Files\Oracle\VirtualBox\VBoxManage.exe"
@@ -30,6 +28,10 @@ pathToStrings = ""
 xxd = ""
 #Path to cut
 cut = ""
+#Path to sed
+sed = ""
+#Path to curl
+curl = ""
 
 #Path to strings of Windows VM without software install
 pathToFirstStringsMachine = ""
@@ -39,3 +41,6 @@ pathToFirstFls = ""
 
 #Path to save yara rule on pc
 pathToYaraSave = ""
+
+#Path to the folder who will contains AsaReport
+pathToAsaReport = ""

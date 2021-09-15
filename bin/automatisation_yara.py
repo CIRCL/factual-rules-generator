@@ -15,7 +15,7 @@ import allVariables
 
 
 ####Creation of yara rule
-def create_rule(ext, s, product_version, flag, l_app):
+def create_rule(ext, s, product_version, l_app, uninstaller):
     app = ""
     for l in l_app:
         if l.split(":")[1].rstrip("\n") == ext[1]:
@@ -29,11 +29,12 @@ def create_rule(ext, s, product_version, flag, l_app):
     else:
         rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[1], ext[2])
 
-    rules += 'description = "Auto gene for %s"\n\t\t' % (str(ext[1]))
+    rules += 'description = "Auto generation for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
     rules += 'versionApp = "%s"\n\t\t' % (product_version)
-    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid1()))
+    rules += 'uuid = "%s"\n\t\t' % (str(uuid.uuid4()))
+    rules += 'uninstaller = "%s"\n\t' % (uninstaller)
 
     rules += "strings: \n"
 
@@ -44,51 +45,60 @@ def create_rule(ext, s, product_version, flag, l_app):
         reg = ""
         r+=1
         for car in regle:
-            if car in string.ascii_letters or car in string.digits or car == " " or car == "\t":
+            if car in string.ascii_letters or car in string.digits or car == " ":
                 reg += car
             elif car in string.punctuation:
                 reg += "\\" + car
-        ## if file is a tree, split to have only the interesting part 
-        if flag:
-            reg = str(reg).split("\t")[1]
  
         rules += "\t\t$s%s = /%s/\n" % (str(r), reg)
 
     ##End of yara rule
     ## 1.25 is a coefficient to match the rule, which leaves a margin of error
-    rules += "\tcondition:\n\t\t%s of ($s*)\n}" % (str(int(r/1.25)))
+    #rules += "\tcondition:\n\t\t%s of ($s*)\n}" % (str(int(r/1.25)))
+    rules += "\tcondition:\n\t\t ext_var of ($s*)\n}" 
 
     return rules
 
 ###Save of the rule on the disk
-def save_rule(ext1, ext2, rules, flag):
-    chemin = None
-    if flag == 3:
-        chemin = os.path.join(allVariables.pathToYaraSave, "exe")
-    elif flag:
-        chemin = os.path.join(allVariables.pathToYaraSave, "tree")
-    else:
-        chemin = os.path.join(allVariables.pathToYaraSave, "txt")
-
+def save_rule(ext1, ext2, rules, uninstaller, flag = False):
+    chemin = os.path.join(allVariables.pathToYaraSave, ext1)
     if not os.path.isdir(chemin):
         os.mkdir(chemin)
 
-    yara_rule = open("%s/%s_%s.yar" % (chemin, ext1, ext2), "w")
+    cheminUninstall = os.path.join(chemin, uninstaller)
+    if not os.path.isdir(cheminUninstall):
+        os.mkdir(cheminUninstall)
+        
+    if flag:
+        cheminUninstall = os.path.join(cheminUninstall, "tree")
+
+    if not os.path.isdir(cheminUninstall):
+        os.mkdir(cheminUninstall)
+
+    yara_rule = open("%s/%s_%s.yar" % (cheminUninstall, ext1, ext2), "w")
     yara_rule.write(rules)
     yara_rule.close()
 
 
-def file_create_rule(chemin, file_version, l_app, flag = False):
+def file_create_rule(chemin, file_version, l_app, stringProg, uninstaller, flag = False):
     s = list()
 
     f = open(chemin, "r")
     file_strings = f.readlines()
 
-    if allVariables.pathToFirstStringsMachine:
+    full = ""
+
+    ## First Strings execute for better performance
+    if stringProg:
+        first = open(stringProg)
+        full = first.readlines() 
+        first.close()
+    ## Strings of the vanilla machine
+    elif allVariables.pathToFirstStringsMachine:
         first = open(allVariables.pathToFirstStringsMachine)
         full = first.readlines() 
         first.close()   
-
+    ## Fls of the vanilla machine
     if allVariables.pathToFirstFls:
         flsFile = open(allVariables.pathToFirstFls, "r")
         fls = flsFile.readlines()
@@ -106,43 +116,45 @@ def file_create_rule(chemin, file_version, l_app, flag = False):
         ## the file is not a tree
         if not flag:
             ## there's a file who contains some strings about a software on a vanilla machine
-            if allVariables.pathToFirstStringsMachine:
+            if full:
                 if ((not len(file_strings[i].split(" ")) > 5 and not len(file_strings[i]) > 30) \
                     or (len(file_strings[i].split(" ")) == 1 and not len(file_strings[i]) > 50)) \
-                    and ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in full:
+                    and ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in full:
 
                         s.append(file_strings[i])
             else:
                 if ((not len(file_strings[i].split(" ")) > 5 and not len(file_strings[i]) > 30) \
                     or (len(file_strings[i].split(" ")) == 1 and not len(file_strings[i]) > 50)) \
-                    and (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i]) and file_strings[i] not in s:
+                    and (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
 
                         s.append(file_strings[i])
+        ## the file is a tree
         else:
+            f_str = str(file_strings[i]).split("\t")[1]
             if allVariables.pathToFirstFls:
-                if ((ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s) and file_strings[i] not in fls:
-                    s.append(file_strings[i])
+                if ((ext[1] in f_str or ext[1].lower() in f_str or ext[1].upper() in f_str) and f_str not in s) and f_str not in fls:
+                    s.append(f_str)
             else:
-                if (ext[1] in file_strings[i] or ext[1].lower() in file_strings[i] or ext[1].upper() in file_strings[i]) and file_strings[i] not in s:
-                    s.append(file_strings[i])
+                if (ext[1] in f_str or ext[1].lower() in f_str or ext[1].upper() in f_str) and f_str not in s:
+                    s.append(f_str)
 
     ## Suppression of the extension
     ext.append(str(ext[-1:][0].split(".")[0]))
     del(ext[-2:-1])
 
     ####Creation of yara rule
-    rules = create_rule(ext, s, file_version, flag, l_app)
+    rules = create_rule(ext, s, file_version, l_app, uninstaller)
 
     print(rules)
     #exit(0)
 
     ###Save of the rule on the disk
-    save_rule(ext[1], ext[2], rules, flag)
+    save_rule(ext[1], ext[2], rules, uninstaller, flag)
 
 
 
 
-def inditif(fichier, file_version, l_app):
+def inditif(fichier, file_version, l_app, stringProg, uninstaller):
     try:
         extension = fichier.split(".")[1]
     except:
@@ -151,6 +163,6 @@ def inditif(fichier, file_version, l_app):
 
     ## the file is a tree
     if fichier.split(".")[1] == "tree":
-        file_create_rule(fichier, file_version, l_app, True)
+        file_create_rule(fichier, file_version, l_app, stringProg, uninstaller, True)
     else:
-        file_create_rule(fichier, file_version, l_app)
+        file_create_rule(fichier, file_version, l_app, stringProg, uninstaller)

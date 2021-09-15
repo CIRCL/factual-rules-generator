@@ -7,10 +7,7 @@ Factual-rules-generator is an open source project which aims to generate yara ru
 ## Python Dependencies
 
 - pefile
-- flask
-- ast
 - psutil
-- requests
 
 
 
@@ -20,6 +17,13 @@ If scripts are run under a Windows machine, some tools are required:
 
 - xxd : https://www.vim.org/download.php
 - cut : http://unxutils.sourceforge.net/
+- sed : http://unxutils.sourceforge.net/
+- curl : https://curl.se/windows/
+
+
+
+- SDelete : https://docs.microsoft.com/en-us/sysinternals/downloads/sdelete
+- AsA (AttackSurfaceAnalyzer) : https://github.com/microsoft/AttackSurfaceAnalyzer
 
 
 
@@ -27,30 +31,36 @@ If scripts are run under a Windows machine, some tools are required:
 
 - Install all python dependencies find in requirements.txt
 
+- Create a share folder to communicate with VM
+
 - Install a Windows VM
     - Install chocolatey on Windows VM: https://docs.chocolatey.org/en-us/choco/setup
+    - Complete `bin/OnWindows/Varclient.py`
+    - Change `bin/OnWindows/client.py` in an exe and put in startup folder
     
-- If use a Linux VM, install it
+- If use a Linux VM, install it and:
     - put `bin/OnLinux/get_Fls_Strings.py` in Linux VM and the script need to be run on startup
+    - In `bin/OnLinux/get_Fls_Strings.py` the path to the share folder need to be fill
     
 - Complete `etc/allVariables.py`
 
-- Add IP adress of the server and share folder in `bin/OnWindows/client.py` at specific lines
-
-- Change `bin/OnWindows/client.py` in an exe and put in startup folder
-
-    
+      
 
 In `test/` some example of software to install is give, it's use a specific format : 
 
-- First, there's the name of the packages to install using choclatey (https://community.chocolatey.org/packages) before `:`
+- First, there's the name of the packages to install using chocolatey (https://community.chocolatey.org/packages) before `:`, or the name of the file in case of msi or exe file.
 - Second, after `:` there's the name of the exe to extract and run it (without extension).
+- The second part after `,` follow the same system with the word `installer` first and after `:` the type of installer :
+  - choco
+  - msiexec
+  - exe
+- Finally, the third part, `uninstaller` follow by `:` and the uninstaller like choco, msiexec or exe
 
 
 
 ## Run 
 
-`bin/server.py` is the first script to run and `bin/Generator.py` is the second and the last.
+ `bin/Generator.py` is the only script to run, but fill `etc/allVariables.py` is very important.
 
 
 

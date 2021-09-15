@@ -1,4 +1,4 @@
-notepadplusplus:notepad++
-putty.install:putty
-googlechrome:chrome
-winrar:winrar
+putty.msi:putty,installer:msiexec,uninstaller:msiexec
+notepadplusplus:notepad++,installer:choco,uninstaller:choco
+googlechrome:chrome,installer:choco,uninstaller:choco
+winrar:WinRAR,installer:choco,uninstaller:choco
