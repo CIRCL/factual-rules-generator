@@ -11,6 +11,10 @@ Factual-rules-generator is an open source project which aims to generate yara ru
 
 
 
+- pyinstaller (to change client.py to client.exe)
+
+
+
 ## Windows requirement
 
 If scripts are run under a Windows machine, some tools are required:
