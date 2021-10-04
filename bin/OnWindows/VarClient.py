@@ -7,8 +7,9 @@ pathToExeExtract = "\\\VBOXSVR\\PartageVM\\exe_extract"
 #Path to Uninstall.exe (Disk)
 pathToUninstaller = "\\\VBOXSVR\\PartageVM\\UninstallX64.exe"
 
-#Path to sdelete.exe (Disk)
-pathToSDelete = ""
+#Path to SDelete (Disk)
+pathToSDelete = "C:/Users/Administrateur/Downloads/sdelete64.exe"
+
 #Path to the file to copy after the uninstallation (ShareFolder)
 pathToCopy = "\\\VBOXSVR\\PartageVM\\string_first"
 
@@ -16,4 +17,4 @@ pathToCopy = "\\\VBOXSVR\\PartageVM\\string_first"
 pathToAsa = "C:/Users/Administrateur/Downloads/ASA_win_2.3.146-beta/Asa.exe"
 
 #Path to the folder who will contains AsaReport (ShareFolder)
-pathToAsaReport = ""
+pathToAsaReport = "\\\VBOXSVR\\PartageVM\\AsaReport\\"

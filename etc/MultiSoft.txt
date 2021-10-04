@@ -1,0 +1,1 @@
+LibreOffice:swriter,scalc,simpress,sdraw,sbase,smath,soffice

@@ -1,4 +1,2 @@
 pefile
-flask
 psutil
-requests

@@ -69,8 +69,44 @@ def nameApp(capp):
             return line.split(":")[1].rstrip("\n")
     return app
 
+def getUninstall(app, l_app):
+    block = blockProg()
+    flag = False
+    alt = ""
+    for b in block:
+        if app == b.split(":")[1].rstrip("\n"):
+            alt = b.split(":")[0].rstrip("\n")
+            flag = True
+            break
+
+    listMultiSoft = list()
+
+    softMulti = ""
+    flagMulti = False
+
+    with open(pathWork + "etc/MultiSoft.txt", "r") as MultiSoft:
+        lines = MultiSoft.readlines()
+        for l in lines :
+            listMultiSoft = l.split(":")
+            soft = listMultiSoft[1].split(",")
+            for s in soft:
+                if (flag and (s == alt)) or (not flag and (s == app)):
+                    softMulti = listMultiSoft[0]
+                    flagMulti = True
+                    break
+    
+    for l in l_app:
+        loc = l.split(",")
+
+        if flagMulti and (softMulti == loc[0].split(":")[1].rstrip("\n")):
+            return loc[2].split(":")[1].rstrip("\n")
+
+        if (flag and (alt == loc[0].split(":")[1].rstrip("\n"))) or (not flag and (app == loc[0].split(":")[1].rstrip("\n"))):
+                return loc[2].split(":")[1].rstrip("\n")
+
+
 # Creation of yara rule for PE informations
-def create_rule(ext, hexa, product_version, l_app):
+def create_rule(ext, hexa, product_version, l_app, uninstaller):
     app = ""
     for l in l_app:
         if l.split(":")[1].rstrip("\n") == ext[0]:
@@ -79,6 +115,7 @@ def create_rule(ext, hexa, product_version, l_app):
 
     ##Headers of yara rule
     if app:
+        print("############################### App\n")
         rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[1])
     else:
         rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[0], ext[1])
@@ -87,7 +124,8 @@ def create_rule(ext, hexa, product_version, l_app):
     rules += 'author = "David Cruciani"\n\t\t'
     rules += 'date = "' + date.strftime('%Y-%m-%d') + '"\n\t\t'
     rules += 'versionApp = "%s"\n\t\t' % (product_version)
-    rules += 'uuid = "%s"\n\t' % (str(uuid.uuid4()))
+    rules += 'uuid = "%s"\n\t\t' % (str(uuid.uuid4()))
+    rules += 'uninstaller = "%s"\n\t' % (uninstaller)
 
     rules += "strings: \n"
 
@@ -146,6 +184,8 @@ def parseAsa(asaReport, currentApp):
 
 
 if __name__ == '__main__':
+    logFile = open(pathWork + "bin/logFile.txt", "a")
+
     ## Get the new name of software and the number of them to install
     list_app_string = list()
     list_block = blockProg()
@@ -165,7 +205,7 @@ if __name__ == '__main__':
     fapp.close()
 
     ## Do a special strings-grep for better performance during yara generation
-    stringProg = ""
+    stringProg = "stringProg"
     if not allVariables.LinuxVM:
         r = 'strings %s | grep -i -E "%s' % (allVariables.pathToFirstStringsMachine, list_app_string[0].split(",")[0])
         for i in range(1, len(list_app_string)):
@@ -272,21 +312,40 @@ if __name__ == '__main__':
                 if os.path.isfile(appchemin):
                     app_status = content.split(".")[0]
                     app = app_status.split("_")[0]
+
+                    listMultiSoft = list()
+
+                    with open(pathWork + "etc/MultiSoft.txt", "r") as MultiSoft:
+                        lines = MultiSoft.readlines()
+                        for l in lines :
+                            if app == l.split(":")[0]:
+                                listMultiSoft = l.split(":")[1].split(",")
+                                listMultiSoft[-1] = listMultiSoft[-1].rstrip("\n")
+
+                    if len(listMultiSoft) == 0:
+                        listMultiSoft.append(app)
+
+                    print("listMultiSoft: " + str(listMultiSoft))
                     
                     ## Run the fls command
-                    OnLinux.get_Fls_Strings.fls(appchemin, allVariables.pathToStrings, app_status)
+                    OnLinux.get_Fls_Strings.fls(appchemin, allVariables.pathToStrings, app_status, listMultiSoft)
 
                     ## Run Strings command
-                    OnLinux.get_Fls_Strings.getStrings(appchemin, app, allVariables.pathToStrings, app_status)
+                    OnLinux.get_Fls_Strings.getStrings(appchemin, listMultiSoft, allVariables.pathToStrings, app_status)
 
 
         ## Parsing of the Asa Report
         if not uninstall:
             if allVariables.pathToAsaReport:
+                logFile.write("[+] Parsing AsA Report \n")
                 print("[+] Parsing AsA Report")
                 ## Parsing
-                content = l_app[loc].split(".")[0] + "_install_Asa_compare.json"
+                content = l_app[loc].split(":")[0].split(".")[0] + "_install_Asa_compare.json"
+                logFile.write("AsaReport to search: " + content + "\n")
+
                 chemin = os.path.join(allVariables.pathToAsaReport, content)
+                logFile.write("Path to AsaReport: " + chemin + "\n")
+
                 if os.path.isfile(chemin):
                     filesed = parseAsa(chemin, nApp)
                     ## read path collect by parser
@@ -326,6 +385,8 @@ if __name__ == '__main__':
                         pathMd5 = stringPath[:-1]
 
                         savePath =  allVariables.pathToYaraSave + "/" + nApp
+                        logFile.write("savePath :" + savePath  + "\n")
+
                         if not os.path.isdir(savePath):
                             os.mkdir(savePath)
 
@@ -369,12 +430,15 @@ if __name__ == '__main__':
         for line in l:
             if line.split(":")[0] == c[0]:
                 c[0] = line.split(":")[1].rstrip("\n")
+
+        uninstaller = getUninstall(c[0], l_app)
+        
         chemin = os.path.join(allVariables.pathToShareWindows, content)
         if os.path.isfile(chemin):
             (hexa, ProductVersion) = get_pe.pe_yara(chemin)
-            rule = create_rule(c, hexa, ProductVersion, l_app)
+            rule = create_rule(c, hexa, ProductVersion, l_app, uninstaller)
             print(rule)
-            automatisation_yara.save_rule(c[0], c[1], rule)
+            automatisation_yara.save_rule(c[0], c[1], rule, uninstaller)
             listProduct[c[0]] = ProductVersion
 
     # Rule for strings and fls
@@ -382,7 +446,12 @@ if __name__ == '__main__':
         chemin = os.path.join(allVariables.pathToStrings, content)
         if os.path.isfile(chemin):
             softName = content.split("@")[1]
-            automatisation_yara.inditif(chemin, listProduct[softName], l_app, stringProg)
+
+            uninstaller = getUninstall(softName, l_app)
+            try:
+                automatisation_yara.inditif(chemin, listProduct[softName], l_app, stringProg, uninstaller)
+            except:
+                automatisation_yara.inditif(chemin, None, l_app, stringProg, uninstaller)
 
     # Hashlookup
     for content in os.listdir(allVariables.pathToYaraSave):
@@ -414,11 +483,11 @@ if __name__ == '__main__':
                             if not os.path.isdir(pathHashMd5):
                                 os.mkdir(pathHashMd5)
 
-                            with open(pathHashMd5 + "/" + lineSplit[-1].rstrip("\n"), "w") as fileHash:
+                            with open(pathHashMd5 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
                                 fileHash.write(str(jsonResponse))
                             #print(jsonResponse)
-            else:
-                print("There's no md5 file")
+            """else:
+                print("There's no md5 file")"""
 
             if os.path.isfile(sha1File):
                 with open(sha1File, "r") as sha1Read:
@@ -442,8 +511,8 @@ if __name__ == '__main__':
                             if not os.path.isdir(pathHashSha1):
                                 os.mkdir(pathHashSha1)
 
-                            with open(pathHashSha1 + "/" + lineSplit[-1].rstrip("\n"), "w") as fileHash:
+                            with open(pathHashSha1 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
                                 fileHash.write(str(jsonResponse))
                             #print(jsonResponse)
-            else:
-                print("There's no sha1 file")
+            """else:
+                print("There's no sha1 file")"""

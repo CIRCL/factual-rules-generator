@@ -1,8 +1,8 @@
 #Path to the list that contains software to install: "nameOfPackage":"nameOfExe"
 applist = "tests/listapp.txt"
 
-#Path to folder that contains software installer
 pathToInstaller = ""
+
 #Path to VBoxManage
 VBoxManage = "C:\\Program Files\Oracle\VirtualBox\VBoxManage.exe"
 
@@ -41,5 +41,6 @@ pathToFirstFls = ""
 
 #Path to save yara rule on pc
 pathToYaraSave = ""
+
 #Path to the folder who will contains AsaReport
 pathToAsaReport = ""
