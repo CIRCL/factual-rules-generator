@@ -18,6 +18,12 @@ import allVariables
 import automatisation_yara
 import OnLinux.get_Fls_Strings
 
+#For feed option
+import glob
+import hashlib
+import ssdeep
+import tlsh
+
 
 # Load of the block list for the name of software
 def blockProg():
@@ -25,6 +31,12 @@ def blockProg():
     l1 = f1.readlines()
     f1.close()
     return l1
+
+def multiSoft():
+    f = open(pathWork + "etc/MultiSoft.txt", "r")
+    l = f.readlines()
+    f.close()
+    return l
 
 def callSubprocessPopen(request, shellUse = False):
     if shellUse:
@@ -48,9 +60,22 @@ def writeFile(app, uninstall):
     installer = appSplit[1].split(":")
 
     appstr = '{"%s":"%s"' % (app[0], app[1])
-    installerstr = '"%s":"%s"}' % (installer[0], installer[1].rstrip("\n"))
+    installerstr = '"%s":"%s"' % (installer[0], installer[1].rstrip("\n"))
+    multi = '"Multi":['
 
-    tmp.write(appstr + ", " + installerstr)
+    listMulti = multiSoft()
+
+    for l in listMulti:
+        lineMulti = l.split(":")
+        if lineMulti[0] == app[0].split(".")[0]:
+            for soft in lineMulti[1].split(","):
+                multi += '"%s",' % (soft.rstrip("\n"))
+            multi = multi[:-1]
+            break
+            
+    multi += "]}"
+
+    tmp.write(appstr + ", " + installerstr + ", " + multi)
     tmp.close()
 
 # Get the list of running vms
@@ -70,6 +95,7 @@ def nameApp(capp):
     return app
 
 def getUninstall(app, l_app):
+
     block = blockProg()
     flag = False
     alt = ""
@@ -90,7 +116,7 @@ def getUninstall(app, l_app):
             listMultiSoft = l.split(":")
             soft = listMultiSoft[1].split(",")
             for s in soft:
-                if (flag and (s == alt)) or (not flag and (s == app)):
+                if (flag and (s.rstrip("\n") == alt)) or (not flag and (s.rstrip("\n") == app)):
                     softMulti = listMultiSoft[0]
                     flagMulti = True
                     break
@@ -98,11 +124,11 @@ def getUninstall(app, l_app):
     for l in l_app:
         loc = l.split(",")
 
-        if flagMulti and (softMulti == loc[0].split(":")[1].rstrip("\n")):
+        if flagMulti and (softMulti == loc[0].split(":")[0].split(".")[0].rstrip("\n")):
             return loc[2].split(":")[1].rstrip("\n")
 
-        if (flag and (alt == loc[0].split(":")[1].rstrip("\n"))) or (not flag and (app == loc[0].split(":")[1].rstrip("\n"))):
-                return loc[2].split(":")[1].rstrip("\n")
+        if (flag and (alt == loc[0].split(":")[0].split(".")[0].rstrip("\n"))) or (not flag and (app == loc[0].split(":")[0].split(".")[0].rstrip("\n"))):
+            return loc[2].split(":")[1].rstrip("\n")
 
 
 # Creation of yara rule for PE informations
@@ -194,12 +220,11 @@ if __name__ == '__main__':
     line_count = 0
     for line in l_app:
         for block in list_block:
-            if line.split(":")[1].rstrip("\n") == block.split(":")[0]:
+            if line.split(",")[0].split(":")[1].rstrip("\n") == block.split(":")[0]:
                 list_app_string.append(block.split(":")[1].rstrip("\n"))
-                break
             else:
-                list_app_string.append(line.split(":")[1].rstrip("\n"))
-                break
+                list_app_string.append(line.split(",")[0].split(":")[1].rstrip("\n"))
+            break
         if line != "\n":
             line_count += 1
     fapp.close()
@@ -207,11 +232,37 @@ if __name__ == '__main__':
     ## Do a special strings-grep for better performance during yara generation
     stringProg = "stringProg"
     if not allVariables.LinuxVM:
-        r = 'strings %s | grep -i -E "%s' % (allVariables.pathToFirstStringsMachine, list_app_string[0].split(",")[0])
-        for i in range(1, len(list_app_string)):
-            r += " | " + list_app_string[i].split(",")[0]
+        r = 'strings %s | grep -i -E "' % (allVariables.pathToFirstStringsMachine)
+
+        flagM = False
+        multi = multiSoft()
+
+        for l in multi:
+            if l.split(":")[0] == l_app[0].split(":")[0].split(".")[0]:
+                flagM = True
+                app = l.split(":")[1].split(",")
+                for a in app:
+                    r += "%s|" % (a.rstrip("\n"))
+                r = r[:-1]
+
+        if not flagM:
+            r += "%s" % (list_app_string[0])
+
+        flagM = False
+        for i in range(1, len(l_app)):
+            for l in multi:
+                if l.split(":")[0] == l_app[i].split(":")[0].split(".")[0]:
+                    flagM = True
+                    app = l.split(":")[1].split(",")
+                    for a in app:
+                        r += "|%s" % (a.rstrip("\n"))
+
+            if not flagM:
+                r += "|" + list_app_string[i]
         r += '" > %s' % (stringProg)
+
         print(r)
+        
         p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
         p_status = p.wait()
@@ -318,7 +369,7 @@ if __name__ == '__main__':
                     with open(pathWork + "etc/MultiSoft.txt", "r") as MultiSoft:
                         lines = MultiSoft.readlines()
                         for l in lines :
-                            if app == l.split(":")[0]:
+                            if l_app[loc % len(l_app)].split(":")[0].split(".")[0] == l.split(":")[0]:
                                 listMultiSoft = l.split(":")[1].split(",")
                                 listMultiSoft[-1] = listMultiSoft[-1].rstrip("\n")
 
@@ -326,7 +377,7 @@ if __name__ == '__main__':
                         listMultiSoft.append(app)
 
                     print("listMultiSoft: " + str(listMultiSoft))
-                    
+               
                     ## Run the fls command
                     OnLinux.get_Fls_Strings.fls(appchemin, allVariables.pathToStrings, app_status, listMultiSoft)
 
@@ -336,6 +387,77 @@ if __name__ == '__main__':
 
         ## Parsing of the Asa Report
         if not uninstall:
+            ## create mount directory
+            pathMnt = "./mnt_convert"
+            if not os.path.isdir(pathMnt):
+                os.mkdir(pathMnt)
+
+            #Special part to feed Hashlookup
+            if allVariables.FeedHashlookup != 'N':
+
+                print("[+] Feed Hahlookup setup")
+                
+                ## mount the convert image
+                print("\t[+] Mount")
+                request = "sudo mount -o loop,ro,noexec,noload,offset=$((512*104448)) %s %s" % (convert_file, pathMnt)
+                callSubprocessPopen(request, True)
+
+                intermediate_file = "./intermediate_file" 
+                print("\t[+] List of all files")
+                request = "find %s -type f > %s" % (pathMnt, intermediate_file)
+                callSubprocessPopen(request, True)
+
+                #exit(0)
+
+                data = []
+                sysinfofile = open(allVariables.pathToSysInfo, "r")
+                sysinfo = sysinfofile.readlines()
+                sysinfofile.close()
+                SysVersion = sysinfo[0].rstrip("\n")
+                SysName = sysinfo[1].rstrip("\n")
+                
+                with open(intermediate_file, 'r') as read_file:
+                    for line in read_file.readlines():
+                        filename = os.path.normpath(line.rstrip("\n"))
+
+                        if not os.path.isdir(filename):
+                            try:                                
+                                md5Glob = hashlib.md5(open(filename, 'rb').read()).hexdigest()
+                                sha1Glob = hashlib.sha1(open(filename, 'rb').read()).hexdigest()
+                                sha256Glob = hashlib.sha256(open(filename, 'rb').read()).hexdigest()
+                                sha512Glob = hashlib.sha512(open(filename, 'rb').read()).hexdigest()
+                                tlshGlob = tlsh.hash(open(filename, 'rb').read())
+                                ssdeepGlob = ssdeep.hash(open(filename, 'rb').read())
+
+                                l = line.split("/")
+                                nameFile = ""
+                                for i in range(2,len(l)):
+                                    nameFile += l[i] + "/"
+                                nameFile = nameFile[:-1]
+
+
+                                data.append(
+                                    {
+                                        'FileName': nameFile.rstrip("\n"),
+                                        'FileSize': os.path.getsize(filename),
+                                        'Windows:Version': SysVersion,
+                                        'Windows:OS': SysName,
+                                        'md5': md5Glob,
+                                        'sha-1': sha1Glob,
+                                        'sha-256': sha256Glob,
+                                        'sha-512': sha512Glob,
+                                        'tlsh': tlshGlob,
+                                        'ssdeep': ssdeepGlob
+                                    }
+                                )
+                            except OSError as err:
+                                #print(err)
+                                pass
+                with open(allVariables.pathToFeedHashlookup + "/" + nApp + ".txt", 'w') as outfile:
+                    json.dump(data, outfile, indent=4)
+
+                os.remove(intermediate_file)
+
             if allVariables.pathToAsaReport:
                 logFile.write("[+] Parsing AsA Report \n")
                 print("[+] Parsing AsA Report")
@@ -351,11 +473,6 @@ if __name__ == '__main__':
                     ## read path collect by parser
                     with open(filesed, "r") as read_file:
                         AsaPath = read_file.readlines()
-
-                    ## create mount directory
-                    pathMnt = "./mnt_convert"
-                    if not os.path.isdir(pathMnt):
-                        os.mkdir(pathMnt)
 
                     ## mount the convert image
                     print("\t[+] Mount")
@@ -396,22 +513,23 @@ if __name__ == '__main__':
                         request = "sha1sum " + pathMd5 + " >> " + savePath + "/" + nApp + "_sha1"
                         callSubprocessPopen(request, True)
 
-                    ## umount the convert image
-                    print("\t[+] Umount")
-                    request = "sudo umount " + pathMnt
-                    callSubprocessPopen(request, True)
-
                     ## Delete Asa path 
                     os.remove(filesed)
+
+            ## umount the convert image
+            print("\t[+] Umount")
+            request = "sudo umount " + pathMnt
+            callSubprocessPopen(request, True)
 
         if i % 2 == 0:
             j += 1
             uninstall = True
         else:
             uninstall = False
-
+            
         ## Suppression of the current raw disk
         os.remove(convert_file)
+
 
     ## Suppression of mount folder
     try:
@@ -486,8 +604,7 @@ if __name__ == '__main__':
                             with open(pathHashMd5 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
                                 fileHash.write(str(jsonResponse))
                             #print(jsonResponse)
-            """else:
-                print("There's no md5 file")"""
+
 
             if os.path.isfile(sha1File):
                 with open(sha1File, "r") as sha1Read:
@@ -513,6 +630,5 @@ if __name__ == '__main__':
 
                             with open(pathHashSha1 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
                                 fileHash.write(str(jsonResponse))
-                            #print(jsonResponse)
-            """else:
-                print("There's no sha1 file")"""
+                            #print(jsonResponse)"""
+

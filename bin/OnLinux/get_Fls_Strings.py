@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 
-def fls(cheminMachine, cheminOut, app_status, listMultiSoft):
+def fls(cheminMachine, cheminOut, app_status, listMultiSoft, logFile):
 	## get the longer partition
 	request = "mmls -t dos %s | cut -c43-55 > %slength_partition" % (cheminMachine, cheminOut)
 	subprocess.call(request, shell=True)
@@ -40,6 +40,8 @@ def fls(cheminMachine, cheminOut, app_status, listMultiSoft):
 	r = "fls -r -o %s %s > %s" % (str(offset), cheminMachine, pathFls1erProg)
 	print("[+] Fls for %s" % (app_status.split("_")[0]))
 
+	logFile.write("[+] Fls request: %s\n" % (r))
+
 	p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
 	(output, err) = p.communicate()
 	p_status = p.wait()
@@ -50,9 +52,12 @@ def fls(cheminMachine, cheminOut, app_status, listMultiSoft):
 	flag1erProg = False
 
 	if len(listMultiSoft) > 1:
+		logFile.write("[+] Fls display listMultiSoft: %s\n" % (listMultiSoft))
 		for l in listMultiSoft:
 			if not pathFls1erProg == "%s@%s@fls_%s.tree" % (cheminOut, l, app_status.split("_")[1]):
+				logFile.write("[+] Fls multi : True\n")
 				shutil.copyfile(pathFls1erProg, "%s@%s@fls_%s.tree" % (cheminOut, l, app_status.split("_")[1]))
+			else:
 				flag1erProg = True
 
 		if not flag1erProg:
@@ -62,8 +67,10 @@ def fls(cheminMachine, cheminOut, app_status, listMultiSoft):
 	os.remove("%sstart_partition" % (cheminOut))
 	
 	
-def getStrings(appchemin, listMultiSoft, cheminOut, app_status):
+def getStrings(appchemin, listMultiSoft, cheminOut, app_status, logFile):
 	r = 'strings %s | grep -i -E "' % (appchemin)
+
+	logFile.write("[+] Strings display listMultiSoft: %s\n" % (listMultiSoft))
 
 	for soft in listMultiSoft:
 		r += '%s |' % (soft)
@@ -75,6 +82,7 @@ def getStrings(appchemin, listMultiSoft, cheminOut, app_status):
 	r += '" > %s' % (pathGlob)
 
 	print("getStrings Request: " + r)
+	logFile.write("[+] getStrings Request: %s\n" % (r))
 
 	print("[+] Strings for %s" % (app_status.split("_")[0]))
 	
@@ -82,15 +90,23 @@ def getStrings(appchemin, listMultiSoft, cheminOut, app_status):
 	(output, err) = p.communicate()
 	p_status = p.wait()
 
-	if not len(listMultiSoft) == 1:
+	flag1erProg = False
+
+	if len(listMultiSoft) > 1:
 		for soft in listMultiSoft:
-			request = "grep -i %s %s > %s@%s@%s.txt" % (soft, pathGlob, cheminOut, soft, app_status.split("_")[1])
+			if not pathGlob == "%s@%s@%s.txt" % (cheminOut, soft, app_status.split("_")[1]):
+				request = "grep -i %s %s > %s@%s@%s.txt" % (soft, pathGlob, cheminOut, soft, app_status.split("_")[1])
 
-			p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
-			(output, err) = p.communicate()
-			p_status = p.wait()
+				logFile.write("[+] Strings multi request: %s\n" % (request))
 
-		os.remove(pathGlob)
+				p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+				(output, err) = p.communicate()
+				p_status = p.wait()
+			else:
+				flag1erProg = True
+
+		if not flag1erProg:
+			os.remove(pathGlob)
 
 
 

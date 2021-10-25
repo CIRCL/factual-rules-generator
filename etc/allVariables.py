@@ -44,3 +44,12 @@ pathToYaraSave = ""
 
 #Path to the folder who will contains AsaReport
 pathToAsaReport = ""
+
+#Option, feed hashlookup, default: N, possibility: N, Y
+FeedHashlookup = "N"
+
+#Path to save the result to feed hashlookup
+pathToFeedHashlookup = ""
+
+#Path to result of systeminfo
+pathToSysInfo = ""

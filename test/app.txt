@@ -1,1 +1,1 @@
-putty.msi:putty,installer:msiexec
+putty.msi:putty,installer:msiexec,uninstaller:msiexec
