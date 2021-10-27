@@ -261,7 +261,7 @@ if __name__ == '__main__':
                 r += "|" + list_app_string[i]
         r += '" > %s' % (stringProg)
 
-        print(r)
+        print("[+] First strings command for better performance...")
         
         p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
         (output, err) = p.communicate()
@@ -431,15 +431,15 @@ if __name__ == '__main__':
 
                                 l = line.split("/")
                                 nameFile = ""
-                                for i in range(2,len(l)):
-                                    nameFile += l[i] + "/"
+                                for inter in range(2,len(l)):
+                                    nameFile += l[inter] + "/"
                                 nameFile = nameFile[:-1]
 
 
                                 data.append(
                                     {
                                         'FileName': nameFile.rstrip("\n"),
-                                        'FileSize': os.path.getsize(filename),
+                                        'FileSize': str(os.path.getsize(filename)),
                                         'Windows:Version': SysVersion,
                                         'Windows:OS': SysName,
                                         'md5': md5Glob,
@@ -453,7 +453,7 @@ if __name__ == '__main__':
                             except OSError as err:
                                 #print(err)
                                 pass
-                with open(allVariables.pathToFeedHashlookup + "/" + nApp + ".txt", 'w') as outfile:
+                with open(allVariables.pathToFeedHashlookup + "/" + nApp + ".json", 'w') as outfile:
                     json.dump(data, outfile, indent=4)
 
                 os.remove(intermediate_file)
@@ -483,7 +483,9 @@ if __name__ == '__main__':
                     print("\t[+] Md5 Asa")
                     for pathMd5 in AsaPath:
                         pathMd5 = pathMnt + "/" + pathMd5.split(":")[1].rstrip("\n")[1:]
-                        pathMd5 = re.sub(r"\\","/", pathMd5)
+
+                        pathMd5 = os.path.normpath(pathMd5)
+                        """pathMd5 = re.sub(r"\\","/", pathMd5)
                         pathMd5 = pathMd5.split("/")
 
                         ## Add "" for each folder who contains space caracters
@@ -499,7 +501,7 @@ if __name__ == '__main__':
                         for sp in pathMd5:
                             stringPath += sp + "/"
 
-                        pathMd5 = stringPath[:-1]
+                        pathMd5 = stringPath[:-1]"""
 
                         savePath =  allVariables.pathToYaraSave + "/" + nApp
                         logFile.write("savePath :" + savePath  + "\n")
@@ -630,5 +632,5 @@ if __name__ == '__main__':
 
                             with open(pathHashSha1 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
                                 fileHash.write(str(jsonResponse))
-                            #print(jsonResponse)"""
+                            #print(jsonResponse)
 

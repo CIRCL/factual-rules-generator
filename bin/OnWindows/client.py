@@ -115,7 +115,7 @@ def collectSysteminfo():
     y = re.search(r" {2,}(?P<name>.*)", SystemName)
 
     with open(VarClient.pathToSysInfo, "w") as write_file:
-        write_file.write(x.group("version") + "\n")
+        write_file.write(x.group("version"))
         write_file.write(y.group("name"))
 
     
