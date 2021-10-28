@@ -127,7 +127,7 @@ def getUninstall(app, l_app):
         if flagMulti and (softMulti == loc[0].split(":")[0].split(".")[0].rstrip("\n")):
             return loc[2].split(":")[1].rstrip("\n")
 
-        if (flag and (alt == loc[0].split(":")[0].split(".")[0].rstrip("\n"))) or (not flag and (app == loc[0].split(":")[0].split(".")[0].rstrip("\n"))):
+        if (flag and (alt == loc[0].split(":")[1].rstrip("\n"))) or (not flag and (app == loc[0].split(":")[1].rstrip("\n"))):
             return loc[2].split(":")[1].rstrip("\n")
 
 
@@ -484,8 +484,7 @@ if __name__ == '__main__':
                     for pathMd5 in AsaPath:
                         pathMd5 = pathMnt + "/" + pathMd5.split(":")[1].rstrip("\n")[1:]
 
-                        pathMd5 = os.path.normpath(pathMd5)
-                        """pathMd5 = re.sub(r"\\","/", pathMd5)
+                        pathMd5 = re.sub(r"\\","/", pathMd5)
                         pathMd5 = pathMd5.split("/")
 
                         ## Add "" for each folder who contains space caracters
@@ -493,7 +492,8 @@ if __name__ == '__main__':
                         for sp in pathMd5:
                             for car in sp:
                                 if car == " ":
-                                    pathMd5[cp] = '"' + pathMd5[cp] + '"'
+                                    pathMd5[cp] = '"%s"' % (pathMd5[cp])
+                                    break
                             cp += 1
 
                         ## Reassemble the strings
@@ -501,7 +501,7 @@ if __name__ == '__main__':
                         for sp in pathMd5:
                             stringPath += sp + "/"
 
-                        pathMd5 = stringPath[:-1]"""
+                        pathMd5 = stringPath[:-1]
 
                         savePath =  allVariables.pathToYaraSave + "/" + nApp
                         logFile.write("savePath :" + savePath  + "\n")
@@ -580,6 +580,7 @@ if __name__ == '__main__':
             md5File = pathFolder + "/" + content + "_md5"
             sha1File = pathFolder + "/" + content + "_sha1"
 
+            print("\n[+] Hashlookup")
             if os.path.isfile(md5File):
                 with open(md5File, "r") as md5Read:
                     lines = md5Read.readlines()
@@ -592,9 +593,7 @@ if __name__ == '__main__':
 
                         jsonResponse = json.loads(output.decode())
 
-                        if "message" in jsonResponse.keys():
-                            print(jsonResponse["message"])
-                        else:
+                        if not "message" in jsonResponse.keys():
                             pathHash = os.path.join(pathFolder, "HashLookup")
                             pathHashMd5 = os.path.join(pathHash, "md5")
 
@@ -619,9 +618,7 @@ if __name__ == '__main__':
 
                         jsonResponse = json.loads(output.decode())
 
-                        if "message" in jsonResponse.keys():
-                            print(jsonResponse["message"])
-                        else:
+                        if not "message" in jsonResponse.keys():
                             pathHash = os.path.join(pathFolder, "HashLookup")
                             pathHashSha1 = os.path.join(pathHash, "sha1")
 
