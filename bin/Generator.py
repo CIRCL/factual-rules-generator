@@ -5,6 +5,7 @@ import json
 import uuid
 import time
 import get_pe
+import ndjson
 import shutil
 import datetime
 import subprocess
@@ -409,7 +410,7 @@ if __name__ == '__main__':
 
                 #exit(0)
 
-                data = []
+                data = list()
                 sysinfofile = open(allVariables.pathToSysInfo, "r")
                 sysinfo = sysinfofile.readlines()
                 sysinfofile.close()
@@ -454,7 +455,7 @@ if __name__ == '__main__':
                                 #print(err)
                                 pass
                 with open(allVariables.pathToFeedHashlookup + "/" + nApp + ".json", 'w') as outfile:
-                    json.dump(data, outfile, indent=4)
+                    ndjson.dump(data, outfile)
 
                 os.remove(intermediate_file)
 
