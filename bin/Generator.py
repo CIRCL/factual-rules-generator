@@ -329,7 +329,8 @@ if __name__ == '__main__':
             convert_file = "%s%s_install.img" %(partage, nApp)
 
         print("## Convertion ##")
-        res = subprocess.call([qemu, "convert", "-f", "vmdk", "-O", "raw", vm, convert_file])
+        # res = subprocess.call([qemu, "convert", "-f", "vmdk", "-O", "raw", vm, convert_file])
+        res = subprocess.call([allVariables.VBoxManage, "clonehd", vm, convert_file, "--format", "raw"])
         print("## Convertion Finish ##\n")
 
         
@@ -532,6 +533,9 @@ if __name__ == '__main__':
             
         ## Suppression of the current raw disk
         os.remove(convert_file)
+
+        request = [allVariables.VBoxManage, "closemedium", "disk", convert_file, "--delete"]
+        callSubprocessPopen(request)
 
 
     ## Suppression of mount folder
