@@ -8,23 +8,30 @@ Factual-rules-generator is an open source project which aims to generate yara ru
 
 - pefile
 - psutil
+- ndjson
+- python-tlsh
 
 
 
 - pyinstaller (to change client.py to client.exe)
 
+- ssdeep
+  - On [Ubuntu](https://python-ssdeep.readthedocs.io/en/latest/installation.html#install-on-ubuntu-16-04): 
+    - `sudo apt-get install build-essential libffi-dev python3 python3-dev python3-pip libfuzzy-dev`
+    - `pip install ssdeep`
+
+## Tools requirement
+
+Some tools are required:
+
+- xxd
+- cut
+- sed 
+- curl
 
 
-## Windows requirement
 
-If scripts are run under a Windows machine, some tools are required:
-
-- xxd : https://www.vim.org/download.php
-- cut : http://unxutils.sourceforge.net/
-- sed : http://unxutils.sourceforge.net/
-- curl : https://curl.se/windows/
-
-
+For the windows virtual machine:
 
 - SDelete : https://docs.microsoft.com/en-us/sysinternals/downloads/sdelete
 - AsA (AttackSurfaceAnalyzer) : https://github.com/microsoft/AttackSurfaceAnalyzer
@@ -42,13 +49,9 @@ If scripts are run under a Windows machine, some tools are required:
     - Complete `bin/OnWindows/Varclient.py`
     - Change `bin/OnWindows/client.py` in an exe and put in startup folder
     
-- If use a Linux VM, install it and:
-    - put `bin/OnLinux/get_Fls_Strings.py` in Linux VM and the script need to be run on startup
-    - In `bin/OnLinux/get_Fls_Strings.py` the path to the share folder need to be fill
-    
 - Complete `etc/allVariables.py`
 
-      
+  ​    
 
 In `test/` some example of software to install is give, it's use a specific format : 
 

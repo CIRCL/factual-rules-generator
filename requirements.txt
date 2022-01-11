@@ -1,2 +1,4 @@
 pefile
 psutil
+ndjson
+python-tlsh

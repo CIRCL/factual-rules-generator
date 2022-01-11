@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 
+
 def fls(cheminMachine, cheminOut, app_status, listMultiSoft, logFile):
 	## get the longer partition
 	request = "mmls -t dos %s | cut -c43-55 > %slength_partition" % (cheminMachine, cheminOut)
@@ -107,28 +108,3 @@ def getStrings(appchemin, listMultiSoft, cheminOut, app_status, logFile):
 
 		if not flag1erProg:
 			os.remove(pathGlob)
-
-
-
-if __name__ == '__main__':
-	chemin = "/media/sf_PartageVM/" ## change the path
-
-	cheminConvert = chemin + "convert/"
-	cheminOut = chemin + "Strings_out/"
-
-	for content in os.listdir(cheminConvert):
-		appchemin = os.path.join(cheminConvert, content)
-		if os.path.isfile(appchemin):
-			app_status = content.split(".")[0]
-			app = app_status.split("_")[0]
-			
-			fls(appchemin, cheminOut, app_status)
-
-			getStrings(appchemin, app, cheminOut, app_status)
-			
-	print("[+] Shutdown in 20 sec")
-	
-
-	subprocess.call("shutdown -h -t 20", shell=True)
-	
-	

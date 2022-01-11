@@ -20,14 +20,13 @@ import automatisation_yara
 import OnLinux.get_Fls_Strings
 
 #For feed option
-import glob
 import hashlib
 import ssdeep
 import tlsh
 
 
-# Load of the block list for the name of software
 def blockProg():
+    """Load block list to get the name of software"""
     f1 = open(pathWork + "etc/blockProg.txt", "r")
     l1 = f1.readlines()
     f1.close()
@@ -133,19 +132,12 @@ def getUninstall(app, l_app):
 
 
 # Creation of yara rule for PE informations
-def create_rule(ext, hexa, product_version, l_app, uninstaller):
-    app = ""
-    for l in l_app:
-        if l.split(":")[1].rstrip("\n") == ext[0]:
-            app = l.split(":")[0].split(".")[0]
+def create_rule(ext, hexa, product_version, uninstaller):
+
     date = datetime.datetime.now()
 
     ##Headers of yara rule
-    if app:
-        print("############################### App\n")
-        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[1])
-    else:
-        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[0], ext[1])
+    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[0], ext[1])
 
     rules += 'description = "Auto generation for %s"\n\t\t' % (str(ext[0]))
     rules += 'author = "David Cruciani"\n\t\t'
@@ -169,7 +161,7 @@ def runAuto(s, stringProg):
     pathS = os.path.join(allVariables.pathToStrings, s)
     if os.path.isfile(pathS):
         print(s)
-        automatisation_yara.inditif(pathS, ProductVersion, l_app, stringProg)
+        automatisation_yara.inditif(pathS, ProductVersion, stringProg)
 
 # Parse of Asa Report
 def parseAsa(asaReport, currentApp):
@@ -190,7 +182,7 @@ def parseAsa(asaReport, currentApp):
     with open(filesed, "w") as write_file:
         write_file.write(path)
 
-    request = [allVariables.sed, "-r", "-i"]
+    request = ["sed", "-r", "-i"]
     s = "/"
     j = True
     for i in blocklistASA:
@@ -207,6 +199,34 @@ def parseAsa(asaReport, currentApp):
     callSubprocessPopen(request)
 
     return filesed
+
+def hashlookup(hash, HashFile, pathFolder):
+    if os.path.isfile(HashFile):
+        with open(HashFile, "r") as hashRead:
+            lines = hashRead.readlines()
+            for line in lines:
+                lineSplit = line.split(" ")
+                local = lineSplit[0].rstrip('\n')
+
+                request = f"curl -s -X 'GET' 'https://hashlookup.circl.lu/lookup/{hash}/{local}' -H 'accept: application/json'"
+                p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
+                (output, err) = p.communicate()
+                p_status = p.wait()
+
+                jsonResponse = json.loads(output.decode())
+
+                if not "message" in jsonResponse.keys():
+                    pathHash = os.path.join(pathFolder, "HashLookup")
+                    pathHashMd5 = os.path.join(pathHash, hash)
+
+                    if not os.path.isdir(pathHash):
+                        os.mkdir(pathHash)
+                    if not os.path.isdir(pathHashMd5):
+                        os.mkdir(pathHashMd5)
+
+                    with open(pathHashMd5 + "/" + local, "w") as fileHash:
+                        fileHash.write(str(jsonResponse))
+                    #print(jsonResponse)
 
 
 
@@ -232,41 +252,41 @@ if __name__ == '__main__':
 
     ## Do a special strings-grep for better performance during yara generation
     stringProg = "stringProg"
-    if not allVariables.LinuxVM:
-        r = 'strings %s | grep -i -E "' % (allVariables.pathToFirstStringsMachine)
+    
+    r = 'strings %s | grep -i -E "' % (allVariables.pathToFirstStringsMachine)
 
-        flagM = False
-        multi = multiSoft()
+    flagM = False
+    multi = multiSoft()
 
+    for l in multi:
+        if l.split(":")[0] == l_app[0].split(":")[0].split(".")[0]:
+            flagM = True
+            app = l.split(":")[1].split(",")
+            for a in app:
+                r += "%s|" % (a.rstrip("\n"))
+            r = r[:-1]
+
+    if not flagM:
+        r += "%s" % (list_app_string[0])
+
+    flagM = False
+    for i in range(1, len(l_app)):
         for l in multi:
-            if l.split(":")[0] == l_app[0].split(":")[0].split(".")[0]:
+            if l.split(":")[0] == l_app[i].split(":")[0].split(".")[0]:
                 flagM = True
                 app = l.split(":")[1].split(",")
                 for a in app:
-                    r += "%s|" % (a.rstrip("\n"))
-                r = r[:-1]
+                    r += "|%s" % (a.rstrip("\n"))
 
         if not flagM:
-            r += "%s" % (list_app_string[0])
+            r += "|" + list_app_string[i]
+    r += '" > %s' % (stringProg)
 
-        flagM = False
-        for i in range(1, len(l_app)):
-            for l in multi:
-                if l.split(":")[0] == l_app[i].split(":")[0].split(".")[0]:
-                    flagM = True
-                    app = l.split(":")[1].split(",")
-                    for a in app:
-                        r += "|%s" % (a.rstrip("\n"))
-
-            if not flagM:
-                r += "|" + list_app_string[i]
-        r += '" > %s' % (stringProg)
-
-        print("[+] First strings command for better performance...")
-        
-        p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
-        (output, err) = p.communicate()
-        p_status = p.wait()
+    print("[+] First strings command for better performance...")
+    
+    p = subprocess.Popen(r, stdout=subprocess.PIPE, shell=True)
+    (output, err) = p.communicate()
+    p_status = p.wait()
 
 
     pathMnt = ""
@@ -318,7 +338,7 @@ if __name__ == '__main__':
 
 
         ## Convert windows machine into raw format
-        qemu = allVariables.qemu
+        # qemu = allVariables.qemu
         vm = allVariables.pathToWindowsVM
         partage = allVariables.pathToConvert
         nApp = nameApp(l_app[loc])
@@ -333,58 +353,31 @@ if __name__ == '__main__':
         res = subprocess.call([allVariables.VBoxManage, "clonehd", vm, convert_file, "--format", "raw"])
         print("## Convertion Finish ##\n")
 
-        
-        if allVariables.LinuxVM:
-            res = runningVms()
+        for content in os.listdir(allVariables.pathToConvert):
+            appchemin = os.path.join(allVariables.pathToConvert, content)
+            if os.path.isfile(appchemin):
+                app_status = content.split(".")[0]
+                app = app_status.split("_")[0]
+
+                listMultiSoft = list()
+
+                with open(pathWork + "etc/MultiSoft.txt", "r") as MultiSoft:
+                    lines = MultiSoft.readlines()
+                    for l in lines :
+                        if l_app[loc % len(l_app)].split(":")[0].split(".")[0] == l.split(":")[0]:
+                            listMultiSoft = l.split(":")[1].split(",")
+                            listMultiSoft[-1] = listMultiSoft[-1].rstrip("\n")
+
+                if len(listMultiSoft) == 0:
+                    listMultiSoft.append(app)
+
+                print("listMultiSoft: " + str(listMultiSoft))
             
-            request = [allVariables.VBoxManage, 'startvm', allVariables.LinuxVM]
-            if not allVariables.LinuxVM in res.stdout.decode():
-                ## Start ubuntu machine
-                print("[+] Ubuntu Start")
-                p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
-                (output, err) = p.communicate()
-                p_status = p.wait()
-            else:
-                print("[+] Ubuntu Running")
+                ## Run the fls command
+                OnLinux.get_Fls_Strings.fls(appchemin, allVariables.pathToStrings, app_status, listMultiSoft, logFile)
 
-            ## Wait linux machine to shutdown
-            res = runningVms()
-
-            ## Output to see the time that the linux machine is running
-            cptime = 0
-            while allVariables.LinuxVM in res.stdout.decode():
-                time.sleep(60)
-                cptime += 1
-                print("\rTime spent: %s min" % (cptime), end="")
-                res = runningVms()
-
-            print("\n[+] Ubuntu stop")
-        else:
-            for content in os.listdir(allVariables.pathToConvert):
-                appchemin = os.path.join(allVariables.pathToConvert, content)
-                if os.path.isfile(appchemin):
-                    app_status = content.split(".")[0]
-                    app = app_status.split("_")[0]
-
-                    listMultiSoft = list()
-
-                    with open(pathWork + "etc/MultiSoft.txt", "r") as MultiSoft:
-                        lines = MultiSoft.readlines()
-                        for l in lines :
-                            if l_app[loc % len(l_app)].split(":")[0].split(".")[0] == l.split(":")[0]:
-                                listMultiSoft = l.split(":")[1].split(",")
-                                listMultiSoft[-1] = listMultiSoft[-1].rstrip("\n")
-
-                    if len(listMultiSoft) == 0:
-                        listMultiSoft.append(app)
-
-                    print("listMultiSoft: " + str(listMultiSoft))
-               
-                    ## Run the fls command
-                    OnLinux.get_Fls_Strings.fls(appchemin, allVariables.pathToStrings, app_status, listMultiSoft)
-
-                    ## Run Strings command
-                    OnLinux.get_Fls_Strings.getStrings(appchemin, listMultiSoft, allVariables.pathToStrings, app_status)
+                ## Run Strings command
+                OnLinux.get_Fls_Strings.getStrings(appchemin, listMultiSoft, allVariables.pathToStrings, app_status, logFile)
 
 
         ## Parsing of the Asa Report
@@ -549,7 +542,7 @@ if __name__ == '__main__':
     ProductVersion = ""
     listProduct = dict()
     # Rule for Exe
-    for content in os.listdir(allVariables.pathToShareWindows):
+    for content in os.listdir(allVariables.pathToExeWindows):
         l = blockProg()
         c = content.split(".")
         for line in l:
@@ -558,10 +551,10 @@ if __name__ == '__main__':
 
         uninstaller = getUninstall(c[0], l_app)
         
-        chemin = os.path.join(allVariables.pathToShareWindows, content)
+        chemin = os.path.join(allVariables.pathToExeWindows, content)
         if os.path.isfile(chemin):
             (hexa, ProductVersion) = get_pe.pe_yara(chemin)
-            rule = create_rule(c, hexa, ProductVersion, l_app, uninstaller)
+            rule = create_rule(c, hexa, ProductVersion, uninstaller)
             print(rule)
             automatisation_yara.save_rule(c[0], c[1], rule, uninstaller)
             listProduct[c[0]] = ProductVersion
@@ -574,9 +567,9 @@ if __name__ == '__main__':
 
             uninstaller = getUninstall(softName, l_app)
             try:
-                automatisation_yara.inditif(chemin, listProduct[softName], l_app, stringProg, uninstaller)
+                automatisation_yara.inditif(chemin, listProduct[softName], stringProg, uninstaller)
             except:
-                automatisation_yara.inditif(chemin, None, l_app, stringProg, uninstaller)
+                automatisation_yara.inditif(chemin, None, stringProg, uninstaller)
 
     # Hashlookup
     for content in os.listdir(allVariables.pathToYaraSave):
@@ -586,53 +579,5 @@ if __name__ == '__main__':
             sha1File = pathFolder + "/" + content + "_sha1"
 
             print("\n[+] Hashlookup")
-            if os.path.isfile(md5File):
-                with open(md5File, "r") as md5Read:
-                    lines = md5Read.readlines()
-                    for line in lines:
-                        lineSplit = line.split(" ")
-                        request = "%s -s -X 'GET' 'https://hashlookup.circl.lu/lookup/md5/%s' -H 'accept: application/json'" % ( allVariables.curl, lineSplit[0].rstrip("\n") )
-                        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
-                        (output, err) = p.communicate()
-                        p_status = p.wait()
-
-                        jsonResponse = json.loads(output.decode())
-
-                        if not "message" in jsonResponse.keys():
-                            pathHash = os.path.join(pathFolder, "HashLookup")
-                            pathHashMd5 = os.path.join(pathHash, "md5")
-
-                            if not os.path.isdir(pathHash):
-                                os.mkdir(pathHash)
-                            if not os.path.isdir(pathHashMd5):
-                                os.mkdir(pathHashMd5)
-
-                            with open(pathHashMd5 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
-                                fileHash.write(str(jsonResponse))
-                            #print(jsonResponse)
-
-
-            if os.path.isfile(sha1File):
-                with open(sha1File, "r") as sha1Read:
-                    lines = sha1Read.readlines()
-                    for line in lines:
-                        request = "%s -s -X 'GET' 'https://hashlookup.circl.lu/lookup/sha1/%s' -H 'accept: application/json'" % ( allVariables.curl, line.split(" ")[0].rstrip("\n") )
-                        p = subprocess.Popen(request, stdout=subprocess.PIPE, shell=True)
-                        (output, err) = p.communicate()
-                        p_status = p.wait()
-
-                        jsonResponse = json.loads(output.decode())
-
-                        if not "message" in jsonResponse.keys():
-                            pathHash = os.path.join(pathFolder, "HashLookup")
-                            pathHashSha1 = os.path.join(pathHash, "sha1")
-
-                            if not os.path.isdir(pathHash):
-                                os.mkdir(pathHash)
-                            if not os.path.isdir(pathHashSha1):
-                                os.mkdir(pathHashSha1)
-
-                            with open(pathHashSha1 + "/" + lineSplit[0].rstrip("\n"), "w") as fileHash:
-                                fileHash.write(str(jsonResponse))
-                            #print(jsonResponse)
-
+            hashlookup("md5", md5File, pathFolder)
+            hashlookup("sha1", sha1File, pathFolder)

@@ -15,19 +15,12 @@ import allVariables
 
 
 ####Creation of yara rule
-def create_rule(ext, s, product_version, l_app, uninstaller):
-    app = ""
-    for l in l_app:
-        if l.split(":")[1].rstrip("\n") == ext[1]:
-            app = l.split(":")[0].split(".")[0]
+def create_rule(ext, s, product_version, uninstaller):
 
     date = datetime.datetime.now()
 
     ##Headers of yara rule
-    if app:
-        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (app, ext[2])
-    else:
-        rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[1], ext[2])
+    rules = "rule %s_%s {\n\tmeta:\n\t\t" % (ext[1], ext[2])
 
     rules += 'description = "Auto generation for %s"\n\t\t' % (str(ext[1]))
     rules += 'author = "David Cruciani"\n\t\t'
@@ -80,7 +73,7 @@ def save_rule(ext1, ext2, rules, uninstaller, flag = False):
     yara_rule.close()
 
 
-def file_create_rule(chemin, file_version, l_app, stringProg, uninstaller, flag = False):
+def file_create_rule(chemin, file_version, stringProg, uninstaller, flag = False):
     s = list()
 
     f = open(chemin, "r")
@@ -143,7 +136,7 @@ def file_create_rule(chemin, file_version, l_app, stringProg, uninstaller, flag 
     del(ext[-2:-1])
 
     ####Creation of yara rule
-    rules = create_rule(ext, s, file_version, l_app, uninstaller)
+    rules = create_rule(ext, s, file_version, uninstaller)
 
     print(rules)
     #exit(0)
@@ -154,7 +147,7 @@ def file_create_rule(chemin, file_version, l_app, stringProg, uninstaller, flag 
 
 
 
-def inditif(fichier, file_version, l_app, stringProg, uninstaller):
+def inditif(fichier, file_version, stringProg, uninstaller):
     try:
         extension = fichier.split(".")[1]
     except:
@@ -163,6 +156,6 @@ def inditif(fichier, file_version, l_app, stringProg, uninstaller):
 
     ## the file is a tree
     if fichier.split(".")[1] == "tree":
-        file_create_rule(fichier, file_version, l_app, stringProg, uninstaller, True)
+        file_create_rule(fichier, file_version, stringProg, uninstaller, True)
     else:
-        file_create_rule(fichier, file_version, l_app, stringProg, uninstaller)
+        file_create_rule(fichier, file_version, stringProg, uninstaller)
