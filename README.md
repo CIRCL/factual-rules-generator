@@ -58,11 +58,11 @@ In `test/` [some examples](https://github.com/CIRCL/factual-rules-generator/blob
 
 ## Public YARA rules repository
 
-- [factual-rules](https://github.com/CIRCL/factual-rules)
+- [factual-rules](https://github.com/CIRCL/factual-rules) - Sample rules generated from some very common software.
 
 ## Overview of factual rules generator 
 
-- ![Factual rules generator - workflow](https://github.com/CIRCL/factual-rules-generator/blob/main/img/StructureAutoGene.png?raw=true)
+![Factual rules generator - workflow](https://github.com/CIRCL/factual-rules-generator/blob/main/img/StructureAutoGene.png?raw=true)
 
 ## License
 
