@@ -1,19 +1,19 @@
 # factual-rules-generator
 
-Factual-rules-generator is an open source project which aims to generate yara rules about installed software on a machine.
+Factual-rules-generator is an open source project which aims to generate [YARA rules](https://github.com/CIRCL/factual-rules) about installed software from a running operating system.
 
+The goal of the software is to be able to use a set of rules against collected or acquired digital forensic evidences and find installed software in a timely fashion.
 
+The software can be used to baseline known software from Windows system and create a set of rules for finding similar installation on other systems.
 
-## Python Dependencies
+## Dependencies
 
 - pefile
 - psutil
 - ndjson
 - python-tlsh
 
-
-
-- pyinstaller (to change client.py to client.exe)
+- [PyInstaller](https://pyinstaller.readthedocs.io/en/stable/) (to change client.py to client.exe)
 
 - ssdeep
   - On [Ubuntu](https://python-ssdeep.readthedocs.io/en/latest/installation.html#install-on-ubuntu-16-04): 
@@ -22,40 +22,29 @@ Factual-rules-generator is an open source project which aims to generate yara ru
 
 ## Tools requirement
 
-Some tools are required:
+Some tools are required on the host operating system some are Unix standard tools and some additional ones:
 
 - xxd
-- cut
-- sed 
 - curl
 
+For the Windows virtual machine, the following software is required to be installed:
 
-
-For the windows virtual machine:
-
-- SDelete : https://docs.microsoft.com/en-us/sysinternals/downloads/sdelete
-- AsA (AttackSurfaceAnalyzer) : https://github.com/microsoft/AttackSurfaceAnalyzer
-
-
+- [SDelete](https://docs.microsoft.com/en-us/sysinternals/downloads/sdelete)
+- [AsA (AttackSurfaceAnalyzer)](https://github.com/microsoft/AttackSurfaceAnalyzer)
 
 ## Install
 
-- Install all python dependencies find in requirements.txt
-
-- Create a share folder to communicate with VM
-
+- Install all Python dependencies defined [requirements.txt](https://github.com/CIRCL/factual-rules-generator/blob/main/requirements.txt)
+- Create a shared folder to communicate with VM
 - Install a Windows VM
-    - Install chocolatey on Windows VM: https://docs.chocolatey.org/en-us/choco/setup
+    - Install [chocolatey](https://docs.chocolatey.org/en-us/choco/setup) on Windows VM
     - Complete `bin/OnWindows/Varclient.py`
-    - Change `bin/OnWindows/client.py` in an exe and put in startup folder
-    
-- Complete `etc/allVariables.py`
+    - Change `bin/OnWindows/client.py` in an executable file with [PyInstaller](https://pyinstaller.readthedocs.io/en/stable/) and put in startup folder
+- Update `etc/allVariables.py` to match your desired configuraiton
 
-  ​    
+In `test/` [some examples](https://github.com/CIRCL/factual-rules-generator/blob/main/test/app.txt) of software to install is given, the following specific format is required: 
 
-In `test/` some example of software to install is give, it's use a specific format : 
-
-- First, there's the name of the packages to install using chocolatey (https://community.chocolatey.org/packages) before `:`, or the name of the file in case of msi or exe file.
+- First, select the name of the packages to install using [chocolatey](https://community.chocolatey.org/packages) before `:`, or the name of the file in case of msi or exe file.
 - Second, after `:` there's the name of the exe to extract and run it (without extension).
 - The second part after `,` follow the same system with the word `installer` first and after `:` the type of installer :
   - choco
@@ -63,26 +52,39 @@ In `test/` some example of software to install is give, it's use a specific form
   - exe
 - Finally, the third part, `uninstaller` follow by `:` and the uninstaller like choco, msiexec or exe
 
+## Run and generate the rules 
 
+-  `bin/Generator.py` is the only script to run, don't forget to update `etc/allVariables.py` (critical step).
 
-## Run 
+## Public YARA rules repository
 
- `bin/Generator.py` is the only script to run, but fill `etc/allVariables.py` is very important.
+- [factual-rules](https://github.com/CIRCL/factual-rules)
 
+## Overview of factual rules generator 
 
+- ![Factual rules generator - workflow](https://github.com/CIRCL/factual-rules-generator/blob/main/img/StructureAutoGene.png?raw=true)
 
-## Yara Rule Repo
+## License
 
-[factual-rules](https://github.com/CIRCL/factual-rules)
+~~~
+    Factual-rules-generator is an open source project which aims to generate YARA rules about installed software from a machine. 
 
+    Copyright (C) 2021-2022 David Cruciani
+    Copyright (C) 2021-2022 CIRCL - Computer Incident Response Center Luxembourg
 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-## Structure
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-
-
-<img src="https://github.com/CIRCL/factual-rules-generator/blob/main/img/StructureAutoGene.png?raw=true" alt="alt text" style="zoom:80%;" />
-
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+~~~
 
 
 
